@@ -41,7 +41,7 @@ class RouterGenerator
           if (isset($route['method']) && isset($route['path']) && isset($route['uses'])) {
             $router->match($route['method'], $route['path'], [
               'as' => "api.{$params['module']}.{$params['prefix']}.{$route['uses']}",
-              'uses' => $params['controller'] . "@" . $route['uses'],
+              'uses' => [$params['controller'], $route['uses']],
               'middleware' => $route['middleware'] ?? ['auth:api']
             ]);
           }

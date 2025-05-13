@@ -124,7 +124,7 @@ class EloquentPostRepository extends EloquentCrudRepository implements PostRepos
         '(SELECT MATCH (' . implode(',', json_decode(setting('iblog::selectSearchFieldsPosts'))) . ") AGAINST ('(\"" . $filter->search . "\")' IN BOOLEAN MODE) scoreSearch1, post_id, title, " .
         ' MATCH (' . implode(',', json_decode(setting('iblog::selectSearchFieldsPosts'))) . ") AGAINST ('(+" . $filter->search . "*)' IN BOOLEAN MODE) scoreSearch2 " .
         'from iblog__post_translations ' .
-        "where `locale` = '" . ($filter->locale ?? locale()) . "') as ptrans"
+        "where `locale` = '" . ($filter->locale ?? \App::getLocale()) . "') as ptrans"
       ), 'ptrans.post_id', 'iblog__posts.id')
         ->where(function ($query) {
           $query->where('scoreSearch1', '>', 0)
@@ -141,7 +141,7 @@ class EloquentPostRepository extends EloquentCrudRepository implements PostRepos
     if (isset($filter->status) && !empty($filter->status)) {
       !is_array($filter->status) ? $filter->status = [$filter->status] : false;
       $query->whereRaw("id IN (SELECT post_id from iblog__post_translations where status = " . join($filter->status) .
-        " and locale = '" . ($filter->locale ?? locale()) . "' and post_id = iblog__posts.id )");
+        " and locale = '" . ($filter->locale ?? \App::getLocale()) . "' and post_id = iblog__posts.id )");
     }
 
     // add filter by Categories Intersected 1 or more than 1, in array
@@ -200,7 +200,7 @@ class EloquentPostRepository extends EloquentCrudRepository implements PostRepos
     $query->whereRaw("iblog__posts.category_id IN (SELECT category_id from iblog__category_translations where status = 1 and category_id = iblog__posts.category_id)");
 
     //pre-filter status
-    $query->whereRaw("id IN (SELECT post_id from iblog__post_translations where status = 2 and locale = '" . ($params->filter->locale ?? locale()) . "' and post_id = iblog__posts.id)");
+    $query->whereRaw("id IN (SELECT post_id from iblog__post_translations where status = 2 and locale = '" . ($params->filter->locale ?? \App::getLocale()) . "' and post_id = iblog__posts.id)");
 
 
   }

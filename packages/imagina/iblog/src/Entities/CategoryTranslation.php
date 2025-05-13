@@ -2,12 +2,10 @@
 
 namespace Imagina\Iblog\Entities;
 
-use Cviebrock\EloquentSluggable\Sluggable;
 use Illuminate\Database\Eloquent\Model;
 
 class CategoryTranslation extends Model
 {
-    use Sluggable;
 
     public $timestamps = false;
 

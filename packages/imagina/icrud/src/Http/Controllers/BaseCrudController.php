@@ -90,7 +90,7 @@ class BaseCrudController
             //If request pagination add meta-page
             $params->page ? $response['meta'] = ['page' => $this->pageTransformer($models)] : false;
         } catch (\Exception $e) {
-            $status = $this->getStatusError($e->getCode());
+            $status = 500;//$this->getStatusError($e->getCode());
             $response = $status == 409 ? json_decode($e->getMessage()) :
                 ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }

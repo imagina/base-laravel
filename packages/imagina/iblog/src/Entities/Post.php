@@ -5,7 +5,7 @@ namespace Imagina\Iblog\Entities;
 use Astrotomic\Translatable\Translatable;
 use Imagina\Icrud\Entities\CrudModel;
 
-class Post extends CrudModel implements TaggableInterface
+class Post extends CrudModel
 {
   use Translatable;
 

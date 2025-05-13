@@ -3,18 +3,13 @@
 namespace Imagina\Iblog\Entities;
 
 use Astrotomic\Translatable\Translatable;
-use Illuminate\Database\Eloquent\Model;
-use Laracasts\Presenter\PresentableTrait;
-use Kalnoy\Nestedset\NodeTrait;
-use Illuminate\Support\Str;
-
 use Imagina\Icrud\Entities\CrudModel;
 
 class Category extends CrudModel
 {
-    use Translatable, NodeTrait;
+    use Translatable;
 
-    public $transformer = 'Imagina\Icrud\Transformers\CategoryTransformer';
+    public $transformer = 'Imagina\Iblog\Transformers\CategoryTransformer';
     public $entity = 'Imagina\Icrud\Entities\Category';
     public $repository = 'Imagina\Icrud\Repositories\CategoryRepository';
     public $requestValidation = [
@@ -118,7 +113,7 @@ class Category extends CrudModel
             $this->slug = $category->slug ?? '';
         }
 
-        $currentLocale = $locale ?? locale();
+        $currentLocale = $locale ?? \App::getLocale();
         if (!is_null($currentLocale)) {
             $this->slug = $this->getTranslation($currentLocale)->slug;
         }

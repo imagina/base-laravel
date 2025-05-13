@@ -56,7 +56,7 @@ class CrudResource extends JsonResource
     //Add attributes
     foreach ($attributes as $fieldName) {
       if (!in_array($fieldName, array_keys($response)) && !in_array($fieldName, $excludeAttributes)) {
-        $response[snakeToCamel($fieldName)] = $this->when(
+        $response[$fieldName] = $this->when(
           (isset($this[$fieldName]) || is_null($this[$fieldName])),
           $this[$fieldName]
         );
@@ -65,7 +65,7 @@ class CrudResource extends JsonResource
 
     //Add translatable attributes
     foreach ($translatableAttributes as $fieldName) {
-      $response[snakeToCamel($fieldName)] = $this->when(
+      $response[$fieldName] = $this->when(
         (isset($this[$fieldName]) || is_null($this[$fieldName])),
         $this[$fieldName]
       );
@@ -75,7 +75,7 @@ class CrudResource extends JsonResource
     if (isset($filter->allTranslations) && $filter->allTranslations) {
       foreach ($languages as $lang => $value) {
         foreach ($translatableAttributes as $fieldName) {
-          $response[$lang][snakeToCamel($fieldName)] = $this->hasTranslation($lang) ? $this->translate($lang)[$fieldName] : '';
+          $response[$lang][$fieldName] = $this->hasTranslation($lang) ? $this->translate($lang)[$fieldName] : '';
         }
       }
     }
@@ -155,7 +155,7 @@ class CrudResource extends JsonResource
   public static function transformData($data)
   {
     //Transform from a collections
-    if (($data instanceof Collection) || ($data instanceof LengthAwarePaginator)) {
+    if (false && ($data instanceof Collection) || ($data instanceof LengthAwarePaginator)) {
       return (isset($data->first()->transformer) && $data->first()->transformer) ?
         $data->first()->transformer::collection($data) : CrudResource::collection($data);
     } //Transform from model
