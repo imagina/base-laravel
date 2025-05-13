@@ -1,0 +1,15 @@
+{
+    "name": "imagina/iblog",
+    "description": "Blog module for Laravel",
+    "type": "library",
+    "autoload": {
+        "psr-4": {
+            "Imagina\\Iblog\\": "src/"
+        }
+    },
+    "extra": {
+        "laravel": {
+            "providers": []
+        }
+    }
+}
