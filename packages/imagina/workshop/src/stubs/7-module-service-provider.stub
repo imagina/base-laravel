@@ -1,0 +1,68 @@
+<?php
+
+namespace Modules\$MODULE_NAME$\Providers;
+
+use Illuminate\Database\Eloquent\Factory as EloquentFactory;
+use Illuminate\Support\ServiceProvider;
+use Modules\Core\Traits\CanPublishConfiguration;
+use Modules\Core\Events\BuildingSidebar;
+use Modules\Core\Events\LoadingBackendTranslations;
+use Modules\$MODULE_NAME$\Listeners\$SIDEBAR_LISTENER_NAME$;
+
+class $MODULE_NAME$ServiceProvider extends ServiceProvider
+{
+    use CanPublishConfiguration;
+    /**
+     * Indicates if loading of the provider is deferred.
+     *
+     * @var bool
+     */
+    protected $defer = false;
+
+    /**
+     * Register the service provider.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        $this->registerBindings();
+        $this->app['events']->listen(BuildingSidebar::class, $SIDEBAR_LISTENER_NAME$::class);
+
+        $this->app['events']->listen(LoadingBackendTranslations::class, function (LoadingBackendTranslations $event) {
+            // append translations
+        });
+
+
+    }
+
+    public function boot()
+    {
+
+        $this->publishConfig('$LOWERCASE_MODULE$', 'config');
+        $this->publishConfig('$LOWERCASE_MODULE$', 'crud-fields');
+
+        $this->mergeConfigFrom($this->getModuleConfigFilePath('$LOWERCASE_MODULE$', 'settings'), "asgard.$LOWERCASE_MODULE$.settings");
+        $this->mergeConfigFrom($this->getModuleConfigFilePath('$LOWERCASE_MODULE$', 'settings-fields'), "asgard.$LOWERCASE_MODULE$.settings-fields");
+        $this->mergeConfigFrom($this->getModuleConfigFilePath('$LOWERCASE_MODULE$', 'permissions'), "asgard.$LOWERCASE_MODULE$.permissions");
+
+        //$this->loadMigrationsFrom(__DIR__ . '/../Database/Migrations');
+    }
+
+    /**
+     * Get the services provided by the provider.
+     *
+     * @return array
+     */
+    public function provides()
+    {
+        return array();
+    }
+
+    private function registerBindings()
+    {
+// add bindings
+    }
+
+
+}

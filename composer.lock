@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "7fce75dde9e6ac292ff51da35fa2481c",
+    "content-hash": "f0859b6e644710af80c6caf5c00c5297",
     "packages": [
         {
             "name": "astrotomic/laravel-translatable",
@@ -1211,6 +1211,32 @@
                 }
             },
             "description": "Shared CRUD base for Imagina modules",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "imagina/workshop",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "./packages/imagina/workshop",
+                "reference": "cf00abee351e5c360bd370bcab40fd9b73293afa"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Imagina\\Workshop\\": "src/"
+                }
+            },
+            "authors": [
+                {
+                    "name": "msolanogithub",
+                    "email": "msolano@imaginacolombia.com"
+                }
+            ],
+            "description": "CLI tool to scaffold Imagina base packages",
             "transport-options": {
                 "symlink": true,
                 "relative": true
@@ -8471,7 +8497,8 @@
     "stability-flags": {
         "imagina/iblog": 20,
         "imagina/icore": 20,
-        "imagina/icrud": 20
+        "imagina/icrud": 20,
+        "imagina/workshop": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

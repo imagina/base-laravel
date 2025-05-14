@@ -7,6 +7,7 @@ use Illuminate\Support\ServiceProvider;
 class CoreServiceProvider extends ServiceProvider
 {
     protected array $providers = [
+        \Imagina\Workshop\Providers\WorkshopServiceProvider::class,
         \Imagina\Icrud\Providers\IcrudServiceProvider::class,
         \Imagina\User\Providers\UserServiceProvider::class,
         \Imagina\Page\Providers\PageServiceProvider::class,
