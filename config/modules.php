@@ -213,7 +213,6 @@ return [
         |
         */
         'translations' => false,
-
     ],
 
     /*

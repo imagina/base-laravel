@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "4de3b38b7c45268a72ce5a96fa2c1b61",
+    "content-hash": "844f51afd49179d56a913b376d2526eb",
     "packages": [
         {
             "name": "brick/math",
@@ -1053,6 +1053,43 @@
                 }
             ],
             "time": "2025-02-03T10:55:03+00:00"
+        },
+        {
+            "name": "imagina/workshop",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "./packages/imagina/workshop",
+                "reference": "e0737985934b4e7536bad60642a7f8e5b81fba97"
+            },
+            "require": {
+                "illuminate/support": "10.x|11.x|^12.0",
+                "laravel/prompts": "^0.1.15|^0.3"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": [
+                        "Imagina\\Workshop\\Providers\\WorkshopServiceProvider"
+                    ]
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Imagina\\Workshop\\": "src/"
+                }
+            },
+            "authors": [
+                {
+                    "name": "msolanogithub",
+                    "email": "msolano@imaginacolombia.com"
+                }
+            ],
+            "description": "CLI tool to scaffold Imagina base packages",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
         },
         {
             "name": "laravel/framework",
@@ -8220,7 +8257,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": {},
+    "stability-flags": {
+        "imagina/workshop": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
