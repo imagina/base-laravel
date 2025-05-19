@@ -3,48 +3,21 @@
 namespace Imagina\Workshop\Commands;
 
 use Illuminate\Console\Command;
-use Illuminate\Support\Str;
-use Imagina\Workshop\Support\StubHelper;
-use function Laravel\Prompts\text;
+use Imagina\Workshop\Support\ScaffoldTrait;
 
 class MakeModuleCommand extends Command
 {
-    use StubHelper;
+    use ScaffoldTrait;
 
-    protected $signature = 'module:scaffold';
+    protected $signature = 'module:scaffold {module?}';
     protected $description = 'Create a laravel-module';
-
-    protected string $laravelModulesPath = '';
-    protected string $moduleName = '';
-    protected string $modulePath = '';
-
 
     public function handle(): void
     {
-        $this->laravelModulesPath = config('modules.paths.modules', base_path('Modules'));
-        $this->moduleName = $this->getModuleName();
-        $this->modulePath = "$this->laravelModulesPath/$this->moduleName";
-
+        $this->getModuleName('creating');
         $this->createFolderStructure();
         $this->createInitialFilesFromStubs();
-
         $this->info("Package $this->moduleName created successfully at packages/imagina/$this->moduleName");
-    }
-
-    protected function getModuleName(): string
-    {
-        return ucwords(
-            text(
-                label: 'Please enter a name for the module to be created',
-                required: true,
-                validate: fn(string $value) => match (true) {
-                    strlen($value) < 1 => 'The name must be at least 1 characters.',
-                    Str::contains($value, ' ') => 'The name must not contain spaces.',
-                    file_exists("$this->laravelModulesPath/$value") => 'Module already exists.',
-                    default => null
-                }
-            )
-        );
     }
 
     protected function createFolderStructure(): void
@@ -53,9 +26,8 @@ class MakeModuleCommand extends Command
             'config',
             'app/Models',
             'app/Http/Controllers',
-            'app/Http/Routes',
             'app/Http/Transformers',
-            'app/Providers',
+            'providers',
             'app/Repositories/Eloquent',
             'app/Repositories/Cache',
             'Database/Factories',
@@ -75,8 +47,9 @@ class MakeModuleCommand extends Command
             ['stub' => '0-module', 'destination' => 'module.json'],
             ['stub' => '1-config', 'destination' => 'config/config.php'],
             ['stub' => '2-permissions', 'destination' => 'config/permissions.php'],
-            ['stub' => '6-route-resource-api', 'destination' => 'app/Http/routes/web.php'],
-            ['stub' => '7-module-service-provider', 'destination' => 'app/Providers/ModuleServiceProvider.php'],
+            ['stub' => '6-routes-web', 'destination' => 'routes/web.php'],
+            ['stub' => '6-routes-api', 'destination' => 'routes/api.php'],
+            ['stub' => '7-module-service-provider', 'destination' => 'providers/ModuleServiceProvider.php'],
         ];
 
         foreach ($files as $file) {

@@ -4,17 +4,23 @@ namespace Imagina\Workshop\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
-use Imagina\Workshop\Support\StubHelper;
+use Imagina\Workshop\Support\ScaffoldTrait;
 
 class MakeModelCommand extends Command
 {
-    use StubHelper;
+    use ScaffoldTrait;
 
-    protected $signature = 'workshop:make-model {package} {model}';
+    protected $signature = 'module:scaffold:model {module?} {model?}';
     protected $description = 'Add a model and its components to an existing package';
 
     public function handle()
     {
+        $this->laravelModulesPath = config('modules.paths.modules', base_path('Modules'));
+        $this->moduleName = $this->getModuleName('scaffolding');
+        $this->modulePath = "$this->laravelModulesPath/$this->moduleName";
+
+
+
         $package = Str::studly($this->argument('package'));
         $model = Str::studly($this->argument('model'));
         $basePath = base_path("packages/imagina/{$package}/src");

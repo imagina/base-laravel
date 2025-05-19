@@ -1,5 +1,5 @@
 {
-    "name": "$VENDOR$/$MODULE_NAME$",
+    "name": "$VENDOR$/$LOWERCASE_MODULE_NAME$",
     "description": "",
     "authors": [
         {
