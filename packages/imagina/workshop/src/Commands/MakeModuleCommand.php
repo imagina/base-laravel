@@ -9,12 +9,12 @@ class MakeModuleCommand extends Command
 {
     use ScaffoldTrait;
 
-    protected $signature = 'module:scaffold {module?}';
+    protected $signature = 'module:scaffold {moduleCreation?}';
     protected $description = 'Create a laravel-module';
 
     public function handle(): void
     {
-        $this->getModuleName('creating');
+        $this->getModuleName($this->ARG_MODULE_CREATION);
         $this->createFolderStructure();
         $this->createInitialFilesFromStubs();
         $this->info("Package $this->moduleName created successfully at packages/imagina/$this->moduleName");
@@ -24,19 +24,18 @@ class MakeModuleCommand extends Command
     {
         $folders = [
             'config',
-            'app/Models',
-            'app/Http/Controllers',
-            'app/Http/Transformers',
+            config('modules.paths.app_folder') . 'Models',
+            config('modules.paths.app_folder') . 'Http/Controllers',
+            config('modules.paths.app_folder') . 'Http/Transformers',
             'providers',
-            'app/Repositories/Eloquent',
-            'app/Repositories/Cache',
-            'Database/Factories',
-            'Database/Migrations',
-            'Database/Seeders',
+            config('modules.paths.app_folder') . 'Repositories/Eloquent',
+            config('modules.paths.app_folder') . 'Repositories/Cache',
+            'database/Factories',
+            'database/Migrations',
+            'database/Seeders',
             'routes',
             'test',
         ];
-
         foreach ($folders as $folder) mkdir("$this->modulePath/$folder", 0755, true);
     }
 

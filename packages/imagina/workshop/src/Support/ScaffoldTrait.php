@@ -11,76 +11,86 @@ trait ScaffoldTrait
     public string $laravelModulesPath = '';
     public string $modulePath = '';
     public string $moduleName = '';
-    public string $modelName = '';
-    public string $modelPath = '';
+    public string $entityName = '';
+    public string $entityPath = '';
 
-    protected function getModuleName(string $type): string
+    public string $ARG_MODULE_CREATION = 'moduleCreation';
+    public string $ARG_MODULE_SCAFFOLDING = 'moduleScaffolding';
+    public string $ARG_ENTITY_CREATION = 'entityCreation';
+
+    protected function getModuleName(string $argument): string
     {
         $this->laravelModulesPath = config('modules.paths.modules', base_path('Modules'));
-
-        $moduleName = Str::studly($this->argument('module'));
-        if ($moduleName) {
-            $isInvalid = $this->validateModuleName($moduleName, $type);
-            if (!$isInvalid) return $moduleName;
-            $this->warn("⚠ $isInvalid");
-        }
-        $moduleName = Str::studly(text(
-            label: 'Please enter a name for the module to be created',
-            required: true,
-            validate: fn(string $value) => $this->validateModuleName($value, $type)
-        ));
-
-        $this->moduleName = $moduleName;
-        $this->modulePath = "$this->laravelModulesPath/$moduleName";
-        return $moduleName;
+        if (!$this->moduleName) $this->moduleName = $this->getArgument($argument, 'Please enter the name of the module');
+        $this->modulePath = $this->getModulePath($this->moduleName);
+        return $this->moduleName;
     }
 
-    protected function getModelName(): string
+    protected function getEntityName(string $argument): string
     {
-        $this->laravelModulesPath = config('modules.paths.modules', base_path('Modules'));
-
-        $modelName = Str::studly($this->argument('model'));
-        if ($modelName) {
-            $isInvalid = $this->validateModuleName($modelName, $type);
-            if (!$isInvalid) return $modelName;
-            $this->warn("⚠ $isInvalid");
-        }
-        $modelName = Str::studly(text(
-            label: 'Please enter a name for the module to be created',
-            required: true,
-            validate: fn(string $value) => $this->validateModuleName($value, $type)
-        ));
-
-        $this->moduleName = $modelName;
-        $this->modulePath = "$this->laravelModulesPath/$modelName";
-        return $modelName;
+        $this->getModuleName($this->ARG_MODULE_SCAFFOLDING);
+        $this->entityName = $this->getArgument($argument, 'Please enter the name of the entity');
+        $this->entityPath = $this->getEntityPath($this->entityName);
+        return $this->entityName;
     }
 
-    protected function validateModuleName(string $value, string $type): ?string
+    protected function getArgument(string $argument, string $description): string
     {
-        // Allowed types
-        $allowedTypes = ['creating', 'scaffolding'];
-        if (!in_array($type, $allowedTypes, true)) return 'Invalid validation type.';
-
-        if (strlen($value) < 3) return 'The name must be at least 3 characters.';
-
-        if (Str::contains($value, ' ')) return 'The name must not contain spaces.';
-
-        $modulePath = "{$this->laravelModulesPath}/$value";
-        return match ($type) {
-            'creating' => file_exists($modulePath) ? 'Module already exists.' : null,
-            'scaffolding' => !file_exists($modulePath) ? "Module doesn't exist." : null,
-            default => null,
-        };
+        $value = Str::studly(trim((string)$this->argument($argument)));
+        if ($value) {
+            $isInvalid = $this->validateArg($argument, $value);
+            if ($isInvalid) {
+                if ($isInvalid) $this->warn("⚠ $isInvalid");;
+                $value = null;
+            }
+        }
+        if (!$value) $value = Str::studly(text(
+            label: $description,
+            required: true,
+            validate: fn(string $value) => $this->validateArg($argument, $value)
+        ));
+        return $value;
     }
 
-    protected function getContentForStub(string $stubName, string $moduleName = '', string $class = '', string $entityType = 'entity'): string
+    protected function getModulePath(string $moduleName): string
+    {
+        return "{$this->laravelModulesPath}/$moduleName";
+    }
+
+    protected function getEntityPath(string $entityName): string
+    {
+        return "{$this->modulePath}/" . config('modules.paths.app_folder') . "Models/$entityName.php";
+    }
+
+    protected function validateArg(string $argument, string $value): ?string
+    {
+        $isInvalid = null;
+        $allowedArg = [$this->ARG_MODULE_CREATION, $this->ARG_MODULE_SCAFFOLDING, $this->ARG_ENTITY_CREATION];
+        if (!in_array($argument, $allowedArg, true)) $isInvalid = 'Invalid Argument.';
+
+        if (strlen($value) < 3) $isInvalid = 'The argument must be at least 3 characters.';
+
+        if (Str::contains($value, ' ')) $isInvalid = 'The argument must not contain spaces.';
+
+        if (!$isInvalid) {
+            $modulePath = $this->getModulePath($value);
+            $entityPath = $this->getEntityPath($value);
+            $isInvalid = match ($argument) {
+                $this->ARG_MODULE_CREATION => file_exists($modulePath) ? "Module $value already exists." : null,
+                $this->ARG_MODULE_SCAFFOLDING => !file_exists($modulePath) ? "Module $value doesn't exist." : null,
+                $this->ARG_ENTITY_CREATION => file_exists($entityPath) ? "Entity $value already exists." : null,
+                default => null,
+            };
+        }
+        return $isInvalid;
+    }
+
+    protected function getContentForStub(string $stubName): string
     {
         $stubPath = __DIR__ . "/../../stubs/$stubName.stub";
-        if (!file_exists($stubPath)) {
-            throw new Exception("Stub not found: $stubPath");
-        }
-
+        $moduleName = $this->moduleName;
+        $entityName = $this->entityName;
+        if (!file_exists($stubPath)) throw new Exception("Stub not found: $stubPath");
         $stub = file_get_contents($stubPath);
 
         return str_replace(
@@ -108,11 +118,11 @@ trait ScaffoldTrait
                 $moduleName,
                 strtolower($moduleName),
                 strtolower(Str::plural($moduleName)),
-                $class,
-                strtolower($class),
-                strtolower(Str::plural($class)),
-                Str::plural($class),
-                $entityType,
+                $entityName,
+                strtolower($entityName),
+                strtolower(Str::plural($entityName)),
+                Str::plural($entityName),
+                'Eloquent',
             ],
             $stub
         );

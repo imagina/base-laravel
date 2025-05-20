@@ -4,7 +4,7 @@ namespace Imagina\Workshop\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Imagina\Workshop\Commands\MakeModuleCommand;
-use Imagina\Workshop\Commands\MakeModelCommand;
+use Imagina\Workshop\Commands\MakeEntityCommand;
 
 class WorkshopServiceProvider extends ServiceProvider
 {
@@ -13,7 +13,7 @@ class WorkshopServiceProvider extends ServiceProvider
         // Register command here
         $this->commands([
             MakeModuleCommand::class,
-            MakeModelCommand::class,
+            MakeEntityCommand::class,
         ]);
     }
 }
