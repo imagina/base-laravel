@@ -24,12 +24,12 @@ class MakeModuleCommand extends Command
     {
         $folders = [
             'config',
-            config('modules.paths.app_folder') . 'Models',
-            config('modules.paths.app_folder') . 'Http/Controllers',
-            config('modules.paths.app_folder') . 'Http/Transformers',
+            $this->appFolderPath . 'Models',
+            $this->appFolderPath . 'Http/Controllers/Api',
+            $this->appFolderPath . 'Http/Transformers',
             'providers',
-            config('modules.paths.app_folder') . 'Repositories/Eloquent',
-            config('modules.paths.app_folder') . 'Repositories/Cache',
+            $this->appFolderPath . 'Repositories/Eloquent',
+            $this->appFolderPath . 'Repositories/Cache',
             'database/Factories',
             'database/Migrations',
             'database/Seeders',
@@ -41,7 +41,7 @@ class MakeModuleCommand extends Command
 
     protected function createInitialFilesFromStubs(): void
     {
-        $files = [
+        $this->generateFiles([
             ['stub' => '0-composer', 'destination' => 'composer.json'],
             ['stub' => '0-module', 'destination' => 'module.json'],
             ['stub' => '1-config', 'destination' => 'config/config.php'],
@@ -49,11 +49,6 @@ class MakeModuleCommand extends Command
             ['stub' => '6-routes-web', 'destination' => 'routes/web.php'],
             ['stub' => '6-routes-api', 'destination' => 'routes/api.php'],
             ['stub' => '7-module-service-provider', 'destination' => 'providers/ModuleServiceProvider.php'],
-        ];
-
-        foreach ($files as $file) {
-            $content = $this->getContentForStub($file['stub'], $this->moduleName);
-            file_put_contents("$this->modulePath/" . $file['destination'], $content);
-        }
+        ]);
     }
 }

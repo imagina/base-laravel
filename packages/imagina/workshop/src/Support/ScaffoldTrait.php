@@ -9,6 +9,7 @@ use function Laravel\Prompts\text;
 trait ScaffoldTrait
 {
     public string $laravelModulesPath = '';
+    public string $appFolderPath = '';
     public string $modulePath = '';
     public string $moduleName = '';
     public string $entityName = '';
@@ -21,6 +22,7 @@ trait ScaffoldTrait
     protected function getModuleName(string $argument): string
     {
         $this->laravelModulesPath = config('modules.paths.modules', base_path('Modules'));
+        $this->appFolderPath = config('modules.paths.app_folder');
         if (!$this->moduleName) $this->moduleName = $this->getArgument($argument, 'Please enter the name of the module');
         $this->modulePath = $this->getModulePath($this->moduleName);
         return $this->moduleName;
@@ -85,6 +87,14 @@ trait ScaffoldTrait
         return $isInvalid;
     }
 
+    protected function generateFiles(array $files): void
+    {
+        foreach ($files as $file) {
+            $content = $this->getContentForStub($file['stub'], $this->moduleName);
+            file_put_contents("$this->modulePath/" . $file['destination'], $content);
+        }
+    }
+
     protected function getContentForStub(string $stubName): string
     {
         $stubPath = __DIR__ . "/../../stubs/$stubName.stub";
@@ -126,5 +136,18 @@ trait ScaffoldTrait
             ],
             $stub
         );
+    }
+
+    protected function appendStub(string $stub, string $destination): void
+    {
+        $fileDestination = "$this->modulePath/" . $destination;
+        $stubContent = $this->getContentForStub($stub);
+        $destinationContent = file_get_contents($fileDestination);
+
+        // Replace the marker with the stub content (preserving the marker for future appends)
+        $newContent = str_replace('// append', $stubContent, $destinationContent);
+
+        // Write back to the permissions file
+        file_put_contents($fileDestination, $newContent);
     }
 }
