@@ -1,9 +1,9 @@
 {
-    "name": "imagina/workshop",
+    "name": "imagina/iworkshop",
     "description": "CLI tool to scaffold Imagina base packages",
     "autoload": {
         "psr-4": {
-            "Imagina\\Workshop\\": "src/"
+            "Imagina\\Iworkshop\\": "src/"
         }
     },
     "authors": [
@@ -19,7 +19,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Imagina\\Workshop\\Providers\\WorkshopServiceProvider"
+                "Imagina\\Iworkshop\\Providers\\WorkshopServiceProvider"
             ]
         }
     }

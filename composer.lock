@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "844f51afd49179d56a913b376d2526eb",
+    "content-hash": "e0d52275ac183a953d97bfa98e2ff3af",
     "packages": [
         {
             "name": "brick/math",
@@ -1055,12 +1055,37 @@
             "time": "2025-02-03T10:55:03+00:00"
         },
         {
-            "name": "imagina/workshop",
+            "name": "imagina/icrud",
             "version": "dev-main",
             "dist": {
                 "type": "path",
-                "url": "./packages/imagina/workshop",
-                "reference": "e0737985934b4e7536bad60642a7f8e5b81fba97"
+                "url": "./packages/imagina/icrud",
+                "reference": "a1a984161a6299840de54c147eeb6aed71086f3c"
+            },
+            "type": "library",
+            "extra": {
+                "laravel": {
+                    "providers": []
+                }
+            },
+            "autoload": {
+                "psr-4": {
+                    "Imagina\\Icrud\\": "src/"
+                }
+            },
+            "description": "Shared CRUD base for Imagina modules",
+            "transport-options": {
+                "symlink": true,
+                "relative": true
+            }
+        },
+        {
+            "name": "imagina/iworkshop",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "./packages/imagina/iworkshop",
+                "reference": "41a7885910c6b34b54caa8c83faf9e38f9febfbb"
             },
             "require": {
                 "illuminate/support": "10.x|11.x|^12.0",
@@ -1070,13 +1095,13 @@
             "extra": {
                 "laravel": {
                     "providers": [
-                        "Imagina\\Workshop\\Providers\\WorkshopServiceProvider"
+                        "Imagina\\Iworkshop\\Providers\\WorkshopServiceProvider"
                     ]
                 }
             },
             "autoload": {
                 "psr-4": {
-                    "Imagina\\Workshop\\": "src/"
+                    "Imagina\\Iworkshop\\": "src/"
                 }
             },
             "authors": [
@@ -8258,7 +8283,8 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "imagina/workshop": 20
+        "imagina/icrud": 20,
+        "imagina/iworkshop": 20
     },
     "prefer-stable": true,
     "prefer-lowest": false,

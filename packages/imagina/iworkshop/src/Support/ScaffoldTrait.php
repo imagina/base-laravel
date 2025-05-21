@@ -1,6 +1,6 @@
 <?php
 
-namespace Imagina\Workshop\Support;
+namespace Imagina\Iworkshop\Support;
 
 use Exception;
 use Illuminate\Support\Str;

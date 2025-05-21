@@ -10,7 +10,8 @@
     "license": "MIT",
     "require": {
         "php": "^8.2",
-        "imagina/workshop": "dev-main",
+        "imagina/icrud": "dev-main",
+        "imagina/iworkshop": "dev-main",
         "laravel/framework": "^12.0",
         "laravel/tinker": "^2.10.1",
         "nwidart/laravel-modules": "^12.0"
@@ -84,7 +85,14 @@
     "repositories": [
         {
             "type": "path",
-            "url": "./packages/imagina/workshop",
+            "url": "./packages/imagina/iworkshop",
+            "options": {
+                "symlink": true
+            }
+        },
+        {
+            "type": "path",
+            "url": "./packages/imagina/icrud",
             "options": {
                 "symlink": true
             }

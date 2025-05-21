@@ -1,10 +1,10 @@
 <?php
 
-namespace Imagina\Workshop\Providers;
+namespace Imagina\Iworkshop\Providers;
 
 use Illuminate\Support\ServiceProvider;
-use Imagina\Workshop\Commands\MakeModuleCommand;
-use Imagina\Workshop\Commands\MakeEntityCommand;
+use Imagina\Iworkshop\Commands\MakeModuleCommand;
+use Imagina\Iworkshop\Commands\MakeEntityCommand;
 
 class WorkshopServiceProvider extends ServiceProvider
 {

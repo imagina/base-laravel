@@ -1,10 +1,10 @@
 <?php
 
-namespace Imagina\Workshop\Commands;
+namespace Imagina\Iworkshop\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Str;
-use Imagina\Workshop\Support\ScaffoldTrait;
+use Imagina\Iworkshop\Support\ScaffoldTrait;
 
 class MakeEntityCommand extends Command
 {

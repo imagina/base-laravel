@@ -1,9 +1,9 @@
 <?php
 
-namespace Imagina\Workshop\Commands;
+namespace Imagina\Iworkshop\Commands;
 
 use Illuminate\Console\Command;
-use Imagina\Workshop\Support\ScaffoldTrait;
+use Imagina\Iworkshop\Support\ScaffoldTrait;
 
 class MakeModuleCommand extends Command
 {
