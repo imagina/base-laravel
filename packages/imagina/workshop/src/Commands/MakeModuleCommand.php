@@ -10,7 +10,7 @@ class MakeModuleCommand extends Command
     use ScaffoldTrait;
 
     protected $signature = 'module:scaffold {moduleCreation?}';
-    protected $description = 'Create a laravel-module';
+    protected $description = 'Create a laravel-module | {module?}';
 
     public function handle(): void
     {
@@ -26,7 +26,7 @@ class MakeModuleCommand extends Command
             'config',
             $this->appFolderPath . 'Models',
             $this->appFolderPath . 'Http/Controllers/Api',
-            $this->appFolderPath . 'Http/Transformers',
+            $this->appFolderPath . 'Transformers',
             'providers',
             $this->appFolderPath . 'Repositories/Eloquent',
             $this->appFolderPath . 'Repositories/Cache',

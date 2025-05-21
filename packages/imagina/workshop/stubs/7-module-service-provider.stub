@@ -59,7 +59,7 @@ class $MODULE_NAME$ServiceProvider extends ServiceProvider
 
     private function registerBindings()
     {
-// add bindings
+        // add bindings
     }
 
 

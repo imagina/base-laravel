@@ -1,20 +1,20 @@
 <?php
 
-namespace Modules\$MODULE_NAME$\Entities;
+namespace Modules\$MODULE_NAME$\App\Models;
 
 use Astrotomic\Translatable\Translatable;
-use Modules\Core\Icrud\Entities\CrudModel;
+use Modules\Core\Icrud\Models\CrudModel;
 
 class $CLASS_NAME$ extends CrudModel
 {
   use Translatable;
 
   protected $table = '$LOWERCASE_MODULE_NAME$__$PLURAL_LOWERCASE_CLASS_NAME$';
-  public $transformer = 'Modules\$MODULE_NAME$\Transformers\$CLASS_NAME$Transformer';
-  public $repository = 'Modules\$MODULE_NAME$\Repositories\$CLASS_NAME$Repository';
+  public $transformer = 'Modules\$MODULE_NAME$\App\Transformers\$CLASS_NAME$Transformer';
+  public $repository = 'Modules\$MODULE_NAME$\App\Repositories\$CLASS_NAME$Repository';
   public $requestValidation = [
-      'create' => 'Modules\$MODULE_NAME$\Http\Requests\Create$CLASS_NAME$Request',
-      'update' => 'Modules\$MODULE_NAME$\Http\Requests\Update$CLASS_NAME$Request',
+      'create' => 'Modules\$MODULE_NAME$\App\Http\Requests\Create$CLASS_NAME$Request',
+      'update' => 'Modules\$MODULE_NAME$\App\Http\Requests\Update$CLASS_NAME$Request',
     ];
   //Instance external/internal events to dispatch with extraData
   public $dispatchesEventsWithBindings = [

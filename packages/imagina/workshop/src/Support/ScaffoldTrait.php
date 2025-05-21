@@ -138,14 +138,14 @@ trait ScaffoldTrait
         );
     }
 
-    protected function appendStub(string $stub, string $destination): void
+    protected function appendStub(string $stub, string $destination, string $replaceValue = '// append'): void
     {
         $fileDestination = "$this->modulePath/" . $destination;
         $stubContent = $this->getContentForStub($stub);
         $destinationContent = file_get_contents($fileDestination);
 
         // Replace the marker with the stub content (preserving the marker for future appends)
-        $newContent = str_replace('// append', $stubContent, $destinationContent);
+        $newContent = str_replace($replaceValue, $stubContent, $destinationContent);
 
         // Write back to the permissions file
         file_put_contents($fileDestination, $newContent);
