@@ -5,6 +5,7 @@ namespace Imagina\Iworkshop\Support;
 use Exception;
 use Illuminate\Support\Str;
 use function Laravel\Prompts\text;
+use Nwidart\Modules\Support\Config\GenerateConfigReader;
 
 trait ScaffoldTrait
 {
@@ -118,6 +119,13 @@ trait ScaffoldTrait
                 '$PLURAL_LOWERCASE_CLASS_NAME$',
                 '$PLURAL_CLASS_NAME$',
                 '$ENTITY_TYPE$',
+                'PATH_VIEWS',
+                'PATH_LANG',
+                'PATH_CONFIG',
+                '$MIGRATIONS_PATH$',
+                'FACTORIES_PATH',
+                '$WEB_ROUTES_PATH$',
+                '$API_ROUTES_PATH$'
             ],
             [
                 config('modules.namespace'),
@@ -133,6 +141,13 @@ trait ScaffoldTrait
                 strtolower(Str::plural($entityName)),
                 Str::plural($entityName),
                 'Eloquent',
+                GenerateConfigReader::read('views')->getPath(),
+                GenerateConfigReader::read('lang')->getPath(),
+                GenerateConfigReader::read('config')->getPath(),
+                GenerateConfigReader::read('migration')->getPath(),
+                GenerateConfigReader::read('factory')->getPath(),
+                config('stubs.files.routes/web', 'Routes/web.php'),
+                config('stubs.files.routes/api', 'Routes/api.php'),
             ],
             $stub
         );

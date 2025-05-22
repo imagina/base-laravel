@@ -1,6 +1,6 @@
 <?php
 
-namespace Imagina\Icore\Services;
+namespace Imagina\Icore\App\Services;
 
 class MigrateService
 {

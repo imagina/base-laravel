@@ -10,7 +10,7 @@
     "extra": {
         "laravel": {
             "providers": [
-                "Imagina\\Icore\\Providers\\IcoreServiceProvider"
+                "Imagina\\Icore\\App\\Providers\\IcoreServiceProvider"
             ]
         }
     },

@@ -50,7 +50,7 @@ class MakeEntityCommand extends Command
         ]);
         $this->appendStub('2-permissions-append', 'config/permissions.php');
         $this->appendStub('6-route-resource-api', 'routes/api.php');
-        $this->appendStub('7-bindings', 'providers/ModuleServiceProvider.php', '// add bindings');
+        $this->appendStub('7-bindings', $this->appFolderPath . "Providers/" . $this->moduleName . "ServiceProvider.php", '// add bindings');
         $this->info("Entity $this->entityName successfully scaffolded in package $this->moduleName.");
     }
 

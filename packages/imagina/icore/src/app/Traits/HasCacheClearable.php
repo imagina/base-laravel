@@ -1,10 +1,10 @@
 <?php
 
-namespace Imagina\Icore\Traits;
+namespace Imagina\Icore\App\Traits;
 
-use Modules\Core\Jobs\ClearCacheByRoutes;
-use Modules\Core\Jobs\ClearCacheWithCDN;
-use Modules\Core\Jobs\ClearAllResponseCache;
+use Imagina\Icore\App\Jobs\ClearCacheByRoutes;
+use Imagina\Icore\App\Jobs\ClearCacheWithCDN;
+use Imagina\Icore\App\Jobs\ClearAllResponseCache;
 
 trait HasCacheClearable
 {

@@ -1,6 +1,6 @@
 <?php
 
-namespace Imagina\Icore\Providers;
+namespace Imagina\Icore\App\Providers;
 
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;

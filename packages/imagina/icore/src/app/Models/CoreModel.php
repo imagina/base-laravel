@@ -9,9 +9,9 @@ use Modules\Isite\Traits\RevisionableTrait;
 use Imagina\Icore\Traits\SingleFlaggable;
 use Imagina\Icore\Traits\HasUniqueFields;
 use Imagina\Icore\Traits\HasCacheClearable;*/
-use Imagina\Icore\Traits\hasEventsWithBindings;
-use Imagina\Icore\Traits\HasOptionalTraits;
-use Imagina\Icore\Repositories\Eloquent\CustomBuilder;
+use Imagina\Icore\App\Traits\hasEventsWithBindings;
+use Imagina\Icore\App\Traits\HasOptionalTraits;
+use Imagina\Icore\App\Repositories\Eloquent\CustomBuilder;
 
 class CoreModel extends Model
 {

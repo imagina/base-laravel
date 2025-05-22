@@ -1,6 +1,6 @@
 <?php
 
-namespace Imagina\Icore\Traits;
+namespace Imagina\Icore\App\Traits;
 
 
 use http\Params;

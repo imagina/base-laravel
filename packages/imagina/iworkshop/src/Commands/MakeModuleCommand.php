@@ -27,7 +27,7 @@ class MakeModuleCommand extends Command
             $this->appFolderPath . 'Models',
             $this->appFolderPath . 'Http/Controllers/Api',
             $this->appFolderPath . 'Transformers',
-            'providers',
+            $this->appFolderPath . 'Providers',
             $this->appFolderPath . 'Repositories/Eloquent',
             $this->appFolderPath . 'Repositories/Cache',
             'database/Factories',
@@ -48,7 +48,9 @@ class MakeModuleCommand extends Command
             ['stub' => '2-permissions', 'destination' => 'config/permissions.php'],
             ['stub' => '6-routes-web', 'destination' => 'routes/web.php'],
             ['stub' => '6-routes-api', 'destination' => 'routes/api.php'],
-            ['stub' => '7-module-service-provider', 'destination' => 'providers/ModuleServiceProvider.php'],
+            ['stub' => '7-module-service-provider', 'destination' => $this->appFolderPath . "Providers/" . $this->moduleName . "ServiceProvider.php"],
+            ['stub' => '7-event-provider', 'destination' => $this->appFolderPath . "Providers/EventProvider.php"],
+            ['stub' => '7-route-provider', 'destination' => $this->appFolderPath . "Providers/RouteServiceProvider.php"],
         ]);
     }
 }
