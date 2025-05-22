@@ -2,9 +2,9 @@
 
 namespace Modules\$MODULE_NAME$\App\Transformers;
 
-use Modules\Core\Icrud\Transformers\CrudResource;
+use Imagina\Icore\App\Transformers\CoreResource;
 
-class $CLASS_NAME$Transformer extends CrudResource
+class $CLASS_NAME$Transformer extends CoreResource
 {
   /**
    * Attribute to exclude relations from transformed data

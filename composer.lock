@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e0d52275ac183a953d97bfa98e2ff3af",
+    "content-hash": "fdf0d7bb7c7e43b075daa481756b2d22",
     "packages": [
         {
             "name": "brick/math",
@@ -1055,12 +1055,12 @@
             "time": "2025-02-03T10:55:03+00:00"
         },
         {
-            "name": "imagina/icrud",
+            "name": "imagina/icore",
             "version": "dev-main",
             "dist": {
                 "type": "path",
-                "url": "./packages/imagina/icrud",
-                "reference": "a1a984161a6299840de54c147eeb6aed71086f3c"
+                "url": "./packages/imagina/icore",
+                "reference": "609577317242e7d5c8a1de5d0de21402f133ff24"
             },
             "type": "library",
             "extra": {
@@ -1070,7 +1070,7 @@
             },
             "autoload": {
                 "psr-4": {
-                    "Imagina\\Icrud\\": "src/"
+                    "Imagina\\Icore\\": "src/"
                 }
             },
             "description": "Shared CRUD base for Imagina modules",
@@ -8283,7 +8283,7 @@
     "aliases": [],
     "minimum-stability": "stable",
     "stability-flags": {
-        "imagina/icrud": 20,
+        "imagina/icore": 20,
         "imagina/iworkshop": 20
     },
     "prefer-stable": true,

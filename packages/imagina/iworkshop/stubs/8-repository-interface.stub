@@ -2,8 +2,8 @@
 
 namespace Modules\$MODULE_NAME$\App\Repositories;
 
-use Modules\Core\Icrud\Repositories\BaseCrudRepository;
+use Imagina\Icore\App\Repositories\CoreRepository;
 
-interface $CLASS_NAME$Repository extends BaseCrudRepository
+interface $CLASS_NAME$Repository extends CoreRepository
 {
 }

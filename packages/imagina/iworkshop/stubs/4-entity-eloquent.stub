@@ -3,9 +3,9 @@
 namespace Modules\$MODULE_NAME$\App\Models;
 
 use Astrotomic\Translatable\Translatable;
-use Modules\Core\Icrud\Models\CrudModel;
+use Imagina\Icore\App\Models\CoreModel;
 
-class $CLASS_NAME$ extends CrudModel
+class $CLASS_NAME$ extends CoreModel
 {
   use Translatable;
 
