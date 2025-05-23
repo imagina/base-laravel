@@ -17,6 +17,7 @@ class MakeModuleCommand extends Command
         $this->getModuleName($this->ARG_MODULE_CREATION);
         $this->createFolderStructure();
         $this->createInitialFilesFromStubs();
+        $this->runComposerDump();
         $this->info("Package $this->moduleName created successfully at packages/imagina/$this->moduleName");
     }
 
@@ -49,7 +50,7 @@ class MakeModuleCommand extends Command
             ['stub' => '6-routes-web', 'destination' => 'routes/web.php'],
             ['stub' => '6-routes-api', 'destination' => 'routes/api.php'],
             ['stub' => '7-module-service-provider', 'destination' => $this->appFolderPath . "Providers/" . $this->moduleName . "ServiceProvider.php"],
-            ['stub' => '7-event-provider', 'destination' => $this->appFolderPath . "Providers/EventProvider.php"],
+            ['stub' => '7-event-provider', 'destination' => $this->appFolderPath . "Providers/EventServiceProvider.php"],
             ['stub' => '7-route-provider', 'destination' => $this->appFolderPath . "Providers/RouteServiceProvider.php"],
         ]);
     }

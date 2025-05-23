@@ -12,15 +12,14 @@ class MakeEntityCommand extends Command
 
     protected $signature = 'module:scaffold:entity {moduleScaffolding?} {entityCreation?}';
     protected $description = 'Create model to an existing module | {module?} {entity?}';
-    protected $entityFiles = [];
 
-    public function handle()
+    public function handle(): void
     {
         $this->getEntityName($this->ARG_ENTITY_CREATION);
         $this->generateFiles([
             [
                 'stub' => '4-entity-eloquent',
-                'destination' => $this->appFolderPath . "/Models/{$this->entityName}.php"
+                'destination' => $this->appFolderPath . "/Models/$this->entityName.php"
             ],
             [
                 'stub' => '4-eloquent-entity-translation',
@@ -51,6 +50,7 @@ class MakeEntityCommand extends Command
         $this->appendStub('2-permissions-append', 'config/permissions.php');
         $this->appendStub('6-route-resource-api', 'routes/api.php');
         $this->appendStub('7-bindings', $this->appFolderPath . "Providers/" . $this->moduleName . "ServiceProvider.php", '// add bindings');
+        $this->runComposerDump();
         $this->info("Entity $this->entityName successfully scaffolded in package $this->moduleName.");
     }
 
@@ -68,8 +68,8 @@ class MakeEntityCommand extends Command
 
         // return files
         return [
-            ['stub' => '3-create-table-migration', 'destination' => "database/Migrations/{$migrationName1}"],
-            ['stub' => '3-create-translation-table-migration', 'destination' => "database/Migrations/{$migrationName2}"]
+            ['stub' => '3-create-table-migration', 'destination' => "database/Migrations/$migrationName1"],
+            ['stub' => '3-create-translation-table-migration', 'destination' => "database/Migrations/$migrationName2"]
         ];
     }
 }

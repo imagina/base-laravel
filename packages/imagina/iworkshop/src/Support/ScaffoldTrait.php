@@ -6,6 +6,7 @@ use Exception;
 use Illuminate\Support\Str;
 use function Laravel\Prompts\text;
 use Nwidart\Modules\Support\Config\GenerateConfigReader;
+use Illuminate\Support\Facades\Process;
 
 trait ScaffoldTrait
 {
@@ -43,7 +44,7 @@ trait ScaffoldTrait
         if ($value) {
             $isInvalid = $this->validateArg($argument, $value);
             if ($isInvalid) {
-                if ($isInvalid) $this->warn("⚠ $isInvalid");;
+                $this->warn("⚠ $isInvalid");
                 $value = null;
             }
         }
@@ -57,12 +58,12 @@ trait ScaffoldTrait
 
     protected function getModulePath(string $moduleName): string
     {
-        return "{$this->laravelModulesPath}/$moduleName";
+        return "$this->laravelModulesPath/$moduleName";
     }
 
     protected function getEntityPath(string $entityName): string
     {
-        return "{$this->modulePath}/" . config('modules.paths.app_folder') . "Models/$entityName.php";
+        return "$this->modulePath/" . config('modules.paths.app_folder') . "Models/$entityName.php";
     }
 
     protected function validateArg(string $argument, string $value): ?string
@@ -91,7 +92,7 @@ trait ScaffoldTrait
     protected function generateFiles(array $files): void
     {
         foreach ($files as $file) {
-            $content = $this->getContentForStub($file['stub'], $this->moduleName);
+            $content = $this->getContentForStub($file['stub']);
             file_put_contents("$this->modulePath/" . $file['destination'], $content);
         }
     }
@@ -164,5 +165,12 @@ trait ScaffoldTrait
 
         // Write back to the permissions file
         file_put_contents($fileDestination, $newContent);
+    }
+
+    protected function runComposerDump(): void
+    {
+        Process::path(base_path())
+            ->command('composer dump-autoload')
+            ->run()->output();
     }
 }
