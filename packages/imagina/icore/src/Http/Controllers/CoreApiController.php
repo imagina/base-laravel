@@ -286,63 +286,6 @@ abstract class CoreApiController
     }
 
     /**
-     * Controller to request all model data from a static entity
-     *
-     * @param $entityClass
-     * @return mixed
-     */
-    public function indexStatic(Request $request, $params): JsonResponse
-    {
-        try {
-            //Instance model
-            $model = app($params['entityClass']);
-
-            //Request data
-            $method = $params['method'] ?? 'index';
-            $models = $model->$method();
-
-            //Response
-            $response = ['data' => $models];
-        } catch (\Exception $e) {
-            $status = $e->getCode();
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
-        }
-
-        //Return response
-        return response()->json($response, $status ?? 200);
-    }
-
-    /**
-     * Controller to request all model data from a static entity
-     *
-     * @param $entityClass
-     * @return mixed
-     */
-    public function showStatic($criteria, Request $request, $params): JsonResponse
-    {
-        try {
-            //Instance model
-            $model = app($params['entityClass']);
-
-            //Request data
-            $method = $params['method'] ?? 'show';
-            $item = $model->$method($criteria);
-
-            //Throw exception if no found item
-            if (!$item) throw new \Exception('Item not found', 404);
-
-            //Response
-            $response = ['data' => $item];
-        } catch (\Exception $e) {
-            $status = $e->getCode();
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
-        }
-
-        //Return response
-        return response()->json($response, $status ?? 200);
-    }
-
-    /**
      * Controller to request all model dashboard
      *
      * @param $entityClass
