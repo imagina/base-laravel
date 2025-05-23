@@ -28,6 +28,7 @@ class MakeModuleCommand extends Command
             'config',
             $this->appFolderPath . 'Models',
             $this->appFolderPath . 'Http/Controllers/Api',
+            $this->appFolderPath . 'Http/Request',
             $this->appFolderPath . 'Transformers',
             $this->appFolderPath . 'Providers',
             $this->appFolderPath . 'Repositories/Eloquent',

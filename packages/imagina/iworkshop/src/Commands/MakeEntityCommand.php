@@ -20,15 +20,23 @@ class MakeEntityCommand extends Command
         $this->generateFiles([
             [
                 'stub' => '4-entity-eloquent',
-                'destination' => $this->appFolderPath . "/Models/$this->entityName.php"
+                'destination' => $this->appFolderPath . "Models/$this->entityName.php"
             ],
             [
                 'stub' => '4-eloquent-entity-translation',
-                'destination' => $this->appFolderPath . "/Models/{$this->entityName}Translation.php"
+                'destination' => $this->appFolderPath . "Models/{$this->entityName}Translation.php"
             ],
             [
                 'stub' => '5-api-controller',
-                'destination' => $this->appFolderPath . "/Http/Controllers/Api/{$this->entityName}ApiController.php"
+                'destination' => $this->appFolderPath . "Http/Controllers/Api/{$this->entityName}ApiController.php"
+            ],
+            [
+                'stub' => '5-create-request',
+                'destination' => $this->appFolderPath . "Http/Request/Create{$this->entityName}Request.php"
+            ],
+            [
+                'stub' => '5-update-request',
+                'destination' => $this->appFolderPath . "Http/Request/Update{$this->entityName}Request.php"
             ],
             [
                 'stub' => '8-repository-interface',

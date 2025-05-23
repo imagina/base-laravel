@@ -3,32 +3,55 @@
 namespace Imagina\Icore\Http\Controllers;
 
 use Illuminate\Http\Request;
-use Imagina\Icore\Transformers\CrudResource;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Support\Facades\DB;
+use Imagina\Icore\Transformers\CoreResource;
+use Illuminate\Database\Eloquent\Model;
+use Imagina\Icore\Repositories\CoreRepository;
+use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\ValidationException;
 
-class CoreApiController
+abstract class CoreApiController
 {
+    public function __construct(
+        protected Model          $model,
+        protected CoreRepository $modelRepository)
+    {
+    }
+
     public function getParamsRequest(Request $request): object
     {
         return (object)[
-            'order'   => $request->input('order'),
-            'page'    => $request->input('page', 1),
-            'take'    => $request->input('take', 12),
-            'filter'  => json_decode($request->input('filter', '[]')),
+            'order' => $request->input('order'),
+            'page' => $request->input('page', 1),
+            'take' => $request->input('take', 12),
+            'filter' => json_decode($request->input('filter', '[]')),
             'include' => explode(',', $request->input('include', '')),
-            'fields'  => explode(',', $request->input('fields', ''))
+            'fields' => explode(',', $request->input('fields', ''))
         ];
     }
 
-    public function validateRequestApi($request)
+    protected function validateWithModelRules(Request $request, string $action): void
     {
-        return true;
-    }
-    public function getStatusError($code = false)
-    {
-        return $code;
+        $class = $this->model->requestValidation[$action] ?? null;
+
+        if ($class && class_exists($class)) {
+            /** @var \Illuminate\Foundation\Http\FormRequest $formRequest */
+            $formRequest = app($class);
+
+            // Pull rules and custom messages (if available)
+            $rules = $formRequest->rules();
+            $messages = method_exists($formRequest, 'messages') ? $formRequest->messages() : [];
+
+            $validator = Validator::make($request->all(), $rules, $messages);
+
+            if ($validator->fails()) {
+                throw new ValidationException($validator);
+            }
+        }
     }
 
-    public function pageTransformer($data)
+    public function pageTransformer($data): array
     {
         return [
             'total' => $data->total(),
@@ -41,33 +64,32 @@ class CoreApiController
     /**
      * Controller to create model
      *
-     * @return mixed
+     * @param Request $request
+     * @return JsonResponse
      */
-    public function create(Request $request)
+    public function create(Request $request): JsonResponse
     {
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             //Get model data
             $modelData = $request->input('attributes') ?? [];
 
             //Validate Request
-            if (isset($this->model->requestValidation['create'])) {
-                $this->validateRequestApi(new $this->model->requestValidation['create']($modelData));
-            }
+            $this->validateWithModelRules($request, 'create');
 
             //Create model
             $model = $this->modelRepository->create($modelData);
 
             //Response
-            $response = ['data' => CrudResource::transformData($model)];
-            \DB::commit(); //Commit to Data Base
+            $response = ['data' => CoreResource::transformData($model)];
+            DB::commit(); //Commit to Data Base
         } catch (\Exception $e) {
-            \DB::rollback(); //Rollback to Data Base
-            $status = $this->getStatusError($e->getCode());
+            DB::rollback(); //Rollback to Data Base
+            $status = $e->getCode();
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
         //Return response
-        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -75,7 +97,7 @@ class CoreApiController
      *
      * @return mixed
      */
-    public function index(Request $request)
+    public function index(Request $request): JsonResponse
     {
         try {
             //Get Parameters from request
@@ -88,15 +110,14 @@ class CoreApiController
             $response = ['data' => $this->modelRepository->getItemsByTransformed($models, $params)];
 
             //If request pagination add meta-page
-            $params->page ? $response['meta'] = ['page' => $this->pageTransformer($models)] : false;
+            if ($params->page) $response['meta'] = ['page' => $this->pageTransformer($models)];
         } catch (\Exception $e) {
-            $status = 500; //$this->getStatusError($e->getCode());
-            $response = $status == 409 ? json_decode($e->getMessage()) :
-                ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $status = $e->getCode();
+            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -104,7 +125,7 @@ class CoreApiController
      *
      * @return mixed
      */
-    public function show($criteria, Request $request)
+    public function show($criteria, Request $request): JsonResponse
     {
         try {
             //Get Parameters from request
@@ -115,18 +136,18 @@ class CoreApiController
 
             //Throw exception if no found item
             if (!$model) {
-                throw new \Exception('Item not found', 204);
+                throw new \Exception('Item not found', 404);
             }
 
             //Response
-            $response = ['data' => CrudResource::transformData($model)];
+            $response = ['data' => CoreResource::transformData($model)];
         } catch (\Exception $e) {
-            $status = $this->getStatusError($e->getCode());
-            $response = ['errors' => $e->getMessage()];
+            $status = $e->getCode();
+            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -134,9 +155,9 @@ class CoreApiController
      *
      * @return mixed
      */
-    public function update($criteria, Request $request)
+    public function update($criteria, Request $request): JsonResponse
     {
-        \DB::beginTransaction(); //DB Transaction
+        DB::beginTransaction(); //DB Transaction
         try {
             //Get model data
             $modelData = $request->input('attributes') ?? [];
@@ -145,33 +166,28 @@ class CoreApiController
 
             //auto-insert the criteria in the data to update
             isset($params->filter->field) ? $field = $params->filter->field : $field = 'id';
-            $data[$field] = $criteria;
+            $modelData[$field] = $criteria;
 
             //Validate Request
-            if (isset($this->model->requestValidation['update'])) {
-                $this->validateRequestApi(new $this->model->requestValidation['update']($modelData));
-            }
+            $this->validateWithModelRules($request, 'update');
 
             //Update model
             $model = $this->modelRepository->updateBy($criteria, $modelData, $params);
 
             //Throw exception if no found item
-            if (!$model) {
-                throw new \Exception('Item not found', 204);
-            }
+            if (!$model) throw new \Exception('Item not found', 404);
 
             //Response
-            $response = ['data' => CrudResource::transformData($model)];
-            \DB::commit(); //Commit to DataBase
+            $response = ['data' => CoreResource::transformData($model)];
+            DB::commit(); //Commit to DataBase
         } catch (\Exception $e) {
-            \DB::rollback(); //Rollback to Data Base
-            $status = $this->getStatusError($e->getCode());
-            $response = $status == 409 ? json_decode($e->getMessage()) :
-                ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            DB::rollback(); //Rollback to Data Base
+            $status = $e->getCode();
+            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -179,9 +195,9 @@ class CoreApiController
      *
      * @return mixed
      */
-    public function delete($criteria, Request $request)
+    public function delete($criteria, Request $request): JsonResponse
     {
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             //Get params
             $params = $this->getParamsRequest($request);
@@ -190,24 +206,22 @@ class CoreApiController
             $modelData = $request->input('attributes') ?? [];
 
             //Validate Request
-            if (isset($this->model->requestValidation['delete'])) {
-                $this->validateRequestApi(new $this->model->requestValidation['delete']($modelData));
-            }
+            $this->validateWithModelRules($request, 'delete');
 
-            //Delete methomodel
+            //Delete model
             $this->modelRepository->deleteBy($criteria, $params);
 
             //Response
             $response = ['data' => 'Item deleted'];
-            \DB::commit(); //Commit to Data Base
+            DB::commit(); //Commit to Data Base
         } catch (\Exception $e) {
-            \DB::rollback(); //Rollback to Data Base
-            $status = $this->getStatusError($e->getCode());
+            DB::rollback(); //Rollback to Data Base
+            $status = $e->getCode();
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -215,32 +229,30 @@ class CoreApiController
      *
      * @return mixed
      */
-    public function restore($criteria, Request $request)
+    public function restore($criteria, Request $request): JsonResponse
     {
-        \DB::beginTransaction();
+        DB::beginTransaction();
         try {
             //Get params
             $params = $this->getParamsRequest($request);
 
-            //Delete methomodel
+            //Delete model
             $model = $this->modelRepository->restoreBy($criteria, $params);
 
             //Throw exception if no found item
-            if (!$model) {
-                throw new \Exception('Item not found', 204);
-            }
+            if (!$model) throw new \Exception('Item not found', 404);
 
             //Response
-            $response = ['data' => CrudResource::transformData($model)];
-            \DB::commit(); //Commit to Data Base
+            $response = ['data' => CoreResource::transformData($model)];
+            DB::commit(); //Commit to Data Base
         } catch (\Exception $e) {
-            \DB::rollback(); //Rollback to Data Base
-            $status = $this->getStatusError($e->getCode());
+            DB::rollback(); //Rollback to Data Base
+            $status = $e->getCode();
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -248,9 +260,9 @@ class CoreApiController
      *
      * @return mixed
      */
-    public function bulkOrder(Request $request)
+    public function bulkOrder(Request $request): JsonResponse
     {
-        \DB::beginTransaction(); //DB Transaction
+        DB::beginTransaction(); //DB Transaction
         try {
             //Get model data
             $data = $request->input('attributes') ?? [];
@@ -261,16 +273,16 @@ class CoreApiController
             $bulkOrderResult = $this->modelRepository->bulkOrder($data, $params);
 
             //Response
-            $response = ['data' => CrudResource::transformData($bulkOrderResult)];
-            \DB::commit(); //Commit to DataBase
+            $response = ['data' => CoreResource::transformData($bulkOrderResult)];
+            DB::commit(); //Commit to DataBase
         } catch (\Exception $e) {
-            \DB::rollback(); //Rollback to Data Base
-            $status = $this->getStatusError($e->getCode());
+            DB::rollback(); //Rollback to Data Base
+            $status = $e->getCode();
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -279,7 +291,7 @@ class CoreApiController
      * @param $entityClass
      * @return mixed
      */
-    public function indexStatic(Request $request, $params)
+    public function indexStatic(Request $request, $params): JsonResponse
     {
         try {
             //Instance model
@@ -292,12 +304,12 @@ class CoreApiController
             //Response
             $response = ['data' => $models];
         } catch (\Exception $e) {
-            \Log::Error($e);
+            $status = $e->getCode();
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -306,7 +318,7 @@ class CoreApiController
      * @param $entityClass
      * @return mixed
      */
-    public function showStatic($criteria, Request $request, $params)
+    public function showStatic($criteria, Request $request, $params): JsonResponse
     {
         try {
             //Instance model
@@ -317,17 +329,17 @@ class CoreApiController
             $item = $model->$method($criteria);
 
             //Throw exception if no found item
-            if (!$item) throw new \Exception('Item not found', 204);
+            if (!$item) throw new \Exception('Item not found', 404);
 
             //Response
             $response = ['data' => $item];
         } catch (\Exception $e) {
-            $status = $this->getStatusError($e->getCode());
-            $response = ["errors" => $e->getMessage()];
+            $status = $e->getCode();
+            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 
     /**
@@ -336,7 +348,7 @@ class CoreApiController
      * @param $entityClass
      * @return mixed
      */
-    public function dashboardIndex(Request $request)
+    public function dashboardIndex(Request $request): JsonResponse
     {
         try {
             //Get Parameters from request
@@ -348,12 +360,11 @@ class CoreApiController
             //Response
             $response = ['data' => $dashboardData];
         } catch (\Exception $e) {
-            $status = $this->getStatusError($e->getCode());
-            $response = $status == 409 ? json_decode($e->getMessage()) :
-                ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $status = $e->getCode();
+            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
         //Return response
-        return response($response ?? ['data' => 'Request successful'], $status ?? 200);
+        return response()->json($response, $status ?? 200);
     }
 }

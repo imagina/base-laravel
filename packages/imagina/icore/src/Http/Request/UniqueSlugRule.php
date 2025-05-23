@@ -1,10 +1,10 @@
 <?php
 
-namespace Imagina\Icore\Http\Controllers\Rules;
+namespace Imagina\Icore\Http\Request;
 
 use Illuminate\Contracts\Validation\Rule;
 
-class UniqueRule implements Rule
+class UniqueSlugRule implements Rule
 {
     /**
      * Create a new rule instance.
@@ -24,7 +24,7 @@ class UniqueRule implements Rule
         $this->table = $table;
         $this->id = $id;
         $this->columnId = $columnId;
-        $this->message = ! empty($message) ? $message : 'There are another register with the same email.';
+        $this->message = ! empty($message) ? $message : 'There are another register with the same slug-locale.';
     }
 
     /**
@@ -32,20 +32,20 @@ class UniqueRule implements Rule
      *
      * @param  mixed  $value
      */
-    public function passes($attribute, $value)
+    public function passes($attribute, $value): bool
     {
         $explodeAttributes = explode('.', $attribute);
-
-        $items = \DB::connection(env('DB_CONNECTION', 'mysql'))->table($this->table)
-            ->where($explodeAttributes[0], $value);
+        $slugs = \DB::table($this->table)
+            ->where($explodeAttributes[1], $value)
+            ->where('locale', $explodeAttributes[0]);
 
         if ($this->id) {
-            $items = $items->where($this->columnId, '!=', $this->id);
+            $slugs = $slugs->where($this->columnId, '!=', $this->id);
         }
 
-        $items = $items->first();
+        $slugs = $slugs->first();
 
-        return !$items;
+        return ! $slugs;
     }
 
     /**
