@@ -1,12 +1,14 @@
 <?php
 
-namespace Modules\$MODULE_NAME$\App\Providers;
+namespace Modules\$MODULE_NAME$\Providers;
 
 use Illuminate\Support\Facades\Blade;
 use Illuminate\Support\ServiceProvider;
 use Nwidart\Modules\Traits\PathNamespace;
 use RecursiveDirectoryIterator;
 use RecursiveIteratorIterator;
+// Bindings
+// append-use-bindings
 
 class $MODULE_NAME$ServiceProvider extends ServiceProvider
 {
@@ -36,6 +38,7 @@ class $MODULE_NAME$ServiceProvider extends ServiceProvider
     {
         $this->app->register(EventServiceProvider::class);
         $this->app->register(RouteServiceProvider::class);
+        $this->registerBindings();
     }
 
     /**
@@ -150,5 +153,10 @@ class $MODULE_NAME$ServiceProvider extends ServiceProvider
         }
 
         return $paths;
+    }
+
+    private function registerBindings(): void
+    {
+        // append-bindings
     }
 }

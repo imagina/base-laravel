@@ -1,9 +1,9 @@
 <?php
 
-namespace Modules\$MODULE_NAME$\App\Repositories\Cache;
+namespace Modules\$MODULE_NAME$\Repositories\Cache;
 
-use Modules\$MODULE_NAME$\App\Repositories\$CLASS_NAME$Repository;
-use Imagina\Icore\App\Repositories\Cache\CoreCacheDecorator;
+use Modules\$MODULE_NAME$\Repositories\$CLASS_NAME$Repository;
+use Imagina\Icore\Repositories\Cache\CoreCacheDecorator;
 
 class Cache$CLASS_NAME$Decorator extends CoreCacheDecorator implements $CLASS_NAME$Repository
 {

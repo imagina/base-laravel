@@ -1,18 +1,25 @@
 {
     "name": "imagina/icore",
     "description": "Shared CRUD base for Imagina modules",
-    "type": "library",
     "autoload": {
         "psr-4": {
-            "Imagina\\Icore\\": "src/"
+            "Imagina\\Icore\\": "src"
         }
+    },
+    "authors": [
+        {
+            "name": "msolanogithub",
+            "email": "msolano@imaginacolombia.com"
+        }
+    ],
+    "require": {
+        "astrotomic/laravel-translatable": "11.*"
     },
     "extra": {
         "laravel": {
             "providers": [
-                "Imagina\\Icore\\App\\Providers\\IcoreServiceProvider"
+                "Imagina\\Icore\\Providers\\IcoreServiceProvider"
             ]
         }
-    },
-    "require": {}
+    }
 }

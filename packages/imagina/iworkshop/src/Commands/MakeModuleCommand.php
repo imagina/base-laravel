@@ -15,10 +15,11 @@ class MakeModuleCommand extends Command
     public function handle(): void
     {
         $this->getModuleName($this->ARG_MODULE_CREATION);
+        $this->components->info("Creating module: [$this->moduleName]");
         $this->createFolderStructure();
         $this->createInitialFilesFromStubs();
         $this->runComposerDump();
-        $this->info("Package $this->moduleName created successfully at packages/imagina/$this->moduleName");
+        $this->components->success("Module [$this->moduleName] created successfully.");
     }
 
     protected function createFolderStructure(): void
@@ -37,7 +38,12 @@ class MakeModuleCommand extends Command
             'routes',
             'test',
         ];
-        foreach ($folders as $folder) mkdir("$this->modulePath/$folder", 0755, true);
+        foreach ($folders as $folder) {
+            $dir = "$this->modulePath/$folder";
+            $this->components->task("Generating file $dir", function () use($dir) {
+                mkdir($dir, 0755, true);
+            });
+        };
     }
 
     protected function createInitialFilesFromStubs(): void

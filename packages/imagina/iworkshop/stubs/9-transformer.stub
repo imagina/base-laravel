@@ -1,8 +1,8 @@
 <?php
 
-namespace Modules\$MODULE_NAME$\App\Transformers;
+namespace Modules\$MODULE_NAME$\Transformers;
 
-use Imagina\Icore\App\Transformers\CoreResource;
+use Imagina\Icore\Transformers\CoreResource;
 
 class $CLASS_NAME$Transformer extends CoreResource
 {

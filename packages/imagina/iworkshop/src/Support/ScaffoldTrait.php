@@ -92,8 +92,11 @@ trait ScaffoldTrait
     protected function generateFiles(array $files): void
     {
         foreach ($files as $file) {
-            $content = $this->getContentForStub($file['stub']);
-            file_put_contents("$this->modulePath/" . $file['destination'], $content);
+            $dir = "$this->modulePath/" . $file['destination'];
+            $this->components->task("Generating file $dir", function () use($file, $dir) {
+                $content = $this->getContentForStub($file['stub']);
+                file_put_contents($dir, $content);
+            });
         }
     }
 

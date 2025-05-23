@@ -1,7 +1,8 @@
 <?php
 
-use Illuminate\Routing\Router;
+use Illuminate\Support\Facades\Route;
+// add-use-controller
 
-$router->group(['prefix' =>'/$LOWERCASE_MODULE_NAME$/v1'], function (Router $router) {
+Route::prefix('/$LOWERCASE_MODULE_NAME$/v1')->group(function () {
 // append
 });

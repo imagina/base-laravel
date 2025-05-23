@@ -16,6 +16,7 @@ class MakeEntityCommand extends Command
     public function handle(): void
     {
         $this->getEntityName($this->ARG_ENTITY_CREATION);
+        $this->components->info("Creating Entity: [$this->entityName]");
         $this->generateFiles([
             [
                 'stub' => '4-entity-eloquent',
@@ -48,10 +49,20 @@ class MakeEntityCommand extends Command
             ...$this->getMigrationFiles()
         ]);
         $this->appendStub('2-permissions-append', 'config/permissions.php');
-        $this->appendStub('6-route-resource-api', 'routes/api.php');
-        $this->appendStub('7-bindings', $this->appFolderPath . "Providers/" . $this->moduleName . "ServiceProvider.php", '// add bindings');
+        $this->appendStub('6-route-api-controller-append', 'routes/api.php', '// add-use-controller');
+        $this->appendStub('6-route-api-append', 'routes/api.php');
+        $this->appendStub(
+            '7-bindings-append',
+            $this->appFolderPath . "Providers/" . $this->moduleName . "ServiceProvider.php",
+            '// append-bindings'
+        );
+        $this->appendStub(
+            '7-bindings-use-append',
+            $this->appFolderPath . "Providers/" . $this->moduleName . "ServiceProvider.php",
+            '// append-use-bindings'
+        );
         $this->runComposerDump();
-        $this->info("Entity $this->entityName successfully scaffolded in package $this->moduleName.");
+        $this->components->success("Entity [$this->entityName] created successfully in module [$this->moduleName].");
     }
 
     protected function getMigrationFiles(): array
