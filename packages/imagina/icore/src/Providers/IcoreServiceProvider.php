@@ -5,6 +5,7 @@ namespace Imagina\Icore\Providers;
 use Illuminate\Support\ServiceProvider;
 use Illuminate\Support\Facades\Route;
 use Imagina\Icore\Routes\RouterGenerator;
+use Illuminate\Database\Schema\Blueprint;
 
 class IcoreServiceProvider extends ServiceProvider
 {
@@ -13,6 +14,28 @@ class IcoreServiceProvider extends ServiceProvider
         // Register apiCrud as a router macro
         Route::macro('apiCrud', function ($params) {
             app(RouterGenerator::class)->apiCrud($params);
+        });
+        //Instance macro to Blueprint class to auditStamps
+        Blueprint::macro('auditStamps', function () {
+            //Deleted_at
+            if (! \Schema::hasColumn($this->getTable(), 'deleted_at')) {
+                $this->timestamp('deleted_at', 0)->nullable();
+            }
+            //Created by
+            if (! \Schema::hasColumn($this->getTable(), 'created_by')) {
+                $this->integer('created_by')->unsigned()->nullable();
+                $this->foreign('created_by')->references('id')->on(config('auth.table', 'users'))->onDelete('restrict');
+            }
+            //Updated by
+            if (! \Schema::hasColumn($this->getTable(), 'updated_by')) {
+                $this->integer('updated_by')->unsigned()->nullable();
+                $this->foreign('updated_by')->references('id')->on(config('auth.table', 'users'))->onDelete('restrict');
+            }
+            //Deleted by
+            if (! \Schema::hasColumn($this->getTable(), 'deleted_by')) {
+                $this->integer('deleted_by')->unsigned()->nullable();
+                $this->foreign('deleted_by')->references('id')->on(config('auth.table', 'users'))->onDelete('restrict');
+            }
         });
     }
 
