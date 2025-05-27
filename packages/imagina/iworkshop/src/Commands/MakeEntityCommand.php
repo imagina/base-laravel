@@ -31,12 +31,12 @@ class MakeEntityCommand extends Command
                 'destination' => $this->appFolderPath . "Http/Controllers/Api/{$this->entityName}ApiController.php"
             ],
             [
-                'stub' => '5-create-request',
-                'destination' => $this->appFolderPath . "Http/Request/Create{$this->entityName}Request.php"
+                'stub' => '5-create-s',
+                'destination' => $this->appFolderPath . "Http/Requests/Create{$this->entityName}Request.php"
             ],
             [
                 'stub' => '5-update-request',
-                'destination' => $this->appFolderPath . "Http/Request/Update{$this->entityName}Request.php"
+                'destination' => $this->appFolderPath . "Http/Requests/Update{$this->entityName}Request.php"
             ],
             [
                 'stub' => '8-repository-interface',
