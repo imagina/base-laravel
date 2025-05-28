@@ -28,7 +28,7 @@ class MakeModuleCommand extends Command
             'config',
             $this->appFolderPath . 'Models',
             $this->appFolderPath . 'Http/Controllers/Api',
-            $this->appFolderPath . 'Http/Request',
+            $this->appFolderPath . 'Http/Requests',
             $this->appFolderPath . 'Transformers',
             $this->appFolderPath . 'Providers',
             $this->appFolderPath . 'Repositories/Eloquent',
@@ -52,6 +52,7 @@ class MakeModuleCommand extends Command
         $this->generateFiles([
             ['stub' => '0-composer', 'destination' => 'composer.json'],
             ['stub' => '0-module', 'destination' => 'module.json'],
+            ['stub' => '0-seeder', 'destination' => "database/Seeders/{$this->moduleName}DatabaseSeeder.php"],
             ['stub' => '1-config', 'destination' => 'config/config.php'],
             ['stub' => '2-permissions', 'destination' => 'config/permissions.php'],
             ['stub' => '6-routes-web', 'destination' => 'routes/web.php'],

@@ -1,0 +1,12 @@
+
+{
+    "name": "Iuser",
+    "alias": "iuser",
+    "description": "manage iuser",
+    "keywords": ["iuser"],
+    "priority": 0,
+    "providers": [
+        "Modules\\Iuser\\Providers\\IuserServiceProvider"
+    ],
+    "files": []
+}

@@ -1,23 +1,23 @@
 <?php
 
-namespace Modules\$MODULE_NAME$\Transformers;
+namespace Modules\Iuser\Transformers;
 
 use Imagina\Icore\Transformers\CoreResource;
 
-class $CLASS_NAME$Transformer extends CoreResource
+class RoleTransformer extends CoreResource
 {
   /**
    * Attribute to exclude relations from transformed data
    * @var array
    */
-  protected array $excludeRelations = [];
+  protected $excludeRelations = [];
 
   /**
   * Method to merge values with response
   *
   * @return array
   */
-  public function modelAttributes($request): array
+  public function modelAttributes($request)
   {
     return [];
   }
