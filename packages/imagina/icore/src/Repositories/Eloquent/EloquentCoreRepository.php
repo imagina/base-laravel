@@ -4,10 +4,12 @@ namespace Imagina\Icore\Repositories\Eloquent;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Query\Builder;
-use Imagina\Icore\Repositories\Eloquent\EloquentBaseRepository;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Support\Facades\DB;
 use Imagina\Icore\Repositories\CoreRepository;
 use Imagina\Icore\Transformers\CoreResource;
+use Nwidart\Modules\Facades\Module;
+use Imagina\Icore\Support\FilterQueryBuilder;
 
 /* TODO : check media event
 use Modules\Ihelpers\Events\CreateMedia;
@@ -23,39 +25,39 @@ use Illuminate\Database\Eloquent\SoftDeletes;*/
 abstract class EloquentCoreRepository extends EloquentBaseRepository implements CoreRepository
 {
     /**
-     * Filter name to replace
      * @var array
      */
     protected array $replaceFilters = [];
 
     /**
-     * Relation name to replace
      * @var array
      */
     protected array $replaceSyncModelRelations = [];
 
 
     /**
-     * Query where to save the current query
-     * @var null
+     * @var Builder|null
      */
     protected ?Builder $query = null;
 
     /**
-     * parameter to validate use of old query
-     * @var null
+     * @var object|null
      */
     protected ?object $params = null;
 
     /**
-     * Attribute to define default relations
-     * all apply to getItemsBy and getItem
-     * index apply in the getItemsBy
-     * show apply in the getItem
      * @var array
      */
     protected array $with = [/*all => [] ,index => [],show => []*/];
 
+    /**
+     * @param array $extraTags
+     * @return bool
+     */
+    public function clearCache(array $extraTags = []): bool
+    {
+        return true;
+    }
 
     /**
      * @param object $params
@@ -64,11 +66,9 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
      */
     public function getOrCreateQuery(object $params, string|int $criteria = null): Builder
     {
-        //save parameters validate use of old query
         $this->params = $params;
 
         if (!empty($params)) {
-            $params = (object)$params;
             $cloneParams = clone $params;
             $cloneParams->returnAsQuery = true;
         } else $cloneParams = (object)["returnAsQuery" => true];
@@ -82,22 +82,21 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
     }
 
     /**
-     * Method to include relations to query
-     * @param $query
-     * @param $relations
+     * @param Builder $query
+     * @param object $params
+     * @param callable|null $method
+     * @return Builder
      */
-    public function includeToQuery(Builder $query, object $params, ?Callable $method = null): Builder
+    public function includeToQuery(Builder $query, object $params, ?callable $method = null): Builder
     {
         $relations = $params->include ?? [];
-        $withoutDefaultInclude = isset($params->filter->withoutDefaultInclude) ? $params->filter->withoutDefaultInclude : false;
+        $withoutDefaultInclude = $params->filter?->withoutDefaultInclude ?? false;
         //request all categories instances in the "relations" attribute in the entity model
         if (in_array('*', $relations)) $relations = $this->model->getRelations() ?? [];
-        else { // Set default Relations
-            if (!$withoutDefaultInclude) {
-                $relations = array_merge($relations, ($this->with['all'] ?? [])); // Include all default relations
-                if ($method == 'show') $relations = array_merge($relations, ($this->with['show'] ?? [])); // include show default relations
-                if ($method == 'index') $relations = array_merge($relations, ($this->with['index'] ?? [])); // include index default reltaion
-            }
+        else if (!$withoutDefaultInclude) {
+            $relations = array_merge($relations, ($this->with['all'] ?? [])); // Include all default relations
+            if ($method == 'show') $relations = array_merge($relations, ($this->with['show'] ?? [])); // include show default relations
+            if ($method == 'index') $relations = array_merge($relations, ($this->with['index'] ?? [])); // include index default relation
         }
         //Filter valid Relations if is possible
         if (method_exists($this->model, 'filterValidRelations')) {
@@ -110,244 +109,195 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
     }
 
     /**
-     * Method to set default model filters by attributes
-     *
-     * @param $query
-     * @param $filter
-     * @param $fieldName
-     * @return mixed
+     * @param Builder $query
+     * @param object $filter
+     * @param object $params
+     * @return Builder
      */
-    public function setFilterQuery($query, $filterData, $fieldName)
-    {
-        $filterWhere = $filterData->where ?? null; //Get filter where condition
-        $filterOperator = $filterData->operator ?? '='; // Get filter operator
-        $filterValue = $filterData->value ?? $filterData; //Get filter value
-
-        //Set where condition
-        if ($filterWhere == 'in') {
-            $query->whereIn($fieldName, (array)$filterValue);
-        } else if ($filterWhere == 'notIn') {
-            $query->whereNotIn($fieldName, (array)$filterValue);
-        } else if ($filterWhere == 'between') {
-            $query->whereBetween($fieldName, $filterValue);
-        } else if ($filterWhere == 'notBetween') {
-            $query->whereNotBetween($fieldName, $filterValue);
-        } else if ($filterWhere == 'null') {
-            $query->whereNull($fieldName);
-        } else if ($filterWhere == 'notNull') {
-            $query->whereNotNull($fieldName);
-        } else if ($filterWhere == 'date') {
-            $query->whereDate($fieldName, $filterOperator, $filterValue);
-        } else if ($filterWhere == 'year') {
-            $query->whereYear($fieldName, $filterOperator, $filterValue);
-        } else if ($filterWhere == 'month') {
-            $query->whereMonth($fieldName, $filterOperator, $filterValue);
-        } else if ($filterWhere == 'day') {
-            $query->whereDay($fieldName, $filterOperator, $filterValue);
-        } else if ($filterWhere == 'time') {
-            $query->whereTime($fieldName, $filterOperator, $filterValue);
-        } else if ($filterWhere == 'column') {
-            $query->whereColumn($fieldName, $filterOperator, $filterValue);
-        } else if ($filterWhere == 'orWhere') {
-            $query->orWhere($fieldName, $filterOperator, $filterValue);
-        } else if ($filterWhere == 'belongsToMany') {
-            $filterValue = (array)$filterValue;
-            //Sub query to get data by pivot
-            if (count($filterValue)) {
-                $relationName = $fieldName[0];
-                $foreignKey = $this->model->$relationName()->getRelatedPivotKeyName();
-                $query->whereHas($relationName, function ($q) use ($foreignKey, $filterValue) {
-                    $q->whereIn($foreignKey, $filterValue);
-                });
-            }
-        } else if ($filterWhere == 'hasMany') {
-            $filterValue = (array)$filterValue;
-            //Sub query to get data by pivot
-            if (count($filterValue)) {
-                $relatedFieldName = camelToSnake($fieldName[1] ?? 'id');
-                $query->whereHas($fieldName[0], function ($q) use ($relatedFieldName, $filterValue) {
-                    $q->whereIn($relatedFieldName, $filterValue);
-                });
-            }
-        } else {
-            $query->where($fieldName, $filterOperator, $filterValue);
-        }
-
-        //Response
-        return $query;
-    }
-
-    /**
-     * Method to filter query
-     * @param $query
-     * @param $filter
-     * @param $params
-     */
-    public function filterQuery($query, $filter, $params)
+    public function filterQuery(Builder $query, object $filter, object $params): Builder
     {
         return $query;
     }
 
     /**
-     * Method to order Query
-     *
-     * @param $query
-     * @param $filter
+     * @param Builder $query
+     * @param object $order
+     * @param bool $noSortOrder
+     * @param string $orderByRaw
+     * @return Builder
      */
-    public function orderQuery($query, $order, $noSortOrder, $orderByRaw)
+    public function orderQuery(Builder $query, object $order, bool $noSortOrder, string $orderByRaw): Builder
     {
-        //allow order by raw with skipping tags
+        // Use raw order if provided, stripping any potential HTML tags
         if (!empty($orderByRaw)) {
-            $orderByRaw = strip_tags($orderByRaw);
-            return $query->orderByRaw($orderByRaw);
+            return $query->orderByRaw(strip_tags($orderByRaw));
         }
-        //Verify if the model has sort_order column and ordering by that column by default
-        $modelFields = $this->model->getFillable();
 
-        //Include sort_order filter by default
-        if (in_array('sort_order', $modelFields) && !$noSortOrder) $query->orderByRaw('COALESCE(sort_order, 0) desc');
+        // Apply default sort_order ordering if available
+        if (!$noSortOrder && in_array('sort_order', $this->model->getFillable())) {
+            $query->orderByRaw('COALESCE(sort_order, 0) DESC');
+        }
 
         $orderField = $order->field ?? 'created_at'; //Default field
         $orderWay = $order->way ?? 'desc'; //Default way
 
-        //Set order to query
-        if (in_array($orderField, ($this->model->translatedAttributes ?? []))) {
-            $query->orderByTranslation($orderField, $orderWay);
-        } else $query->orderBy($orderField, $orderWay);
+        // Determine if this is a translatable field
+        $translatedAttributes = $this->model->translatedAttributes ?? [];
 
-        //Return query with filters
+        if (in_array($orderField, $translatedAttributes)) {
+            //TODO: is this working yet?
+            $query->orderByTranslation($orderField, $orderWay);
+        } else {
+            $query->orderBy($orderField, $orderWay);
+        }
+
         return $query;
     }
 
     /**
-     * Map the definition of model relation
-     *
      * @return array
      */
-    public function getModelRelations()
+    public function getModelRelations(): array
     {
         $modelRelations = [];
-        foreach (($this->model->modelRelations ?? []) as $name => $value) {
-            if (is_string($value)) $modelRelations[$name] = ['relation' => $value];
-            else if (is_array($value) && isset($value['relation'])) $modelRelations[$name] = $value;
+
+        $rawRelations = $this->model->modelRelations ?? [];
+
+        foreach ($rawRelations as $name => $value) {
+            if (is_string($value)) {
+                $modelRelations[$name] = ['relation' => $value];
+            } elseif (is_array($value) && isset($value['relation'])) {
+                $modelRelations[$name] = $value;
+            }
         }
 
         return $modelRelations;
     }
 
     /**
-     * Method to sync Model Relations by default
-     *
-     * @param $model ,$data
-     * @return $model
+     * @param Model $model
+     * @param array $data
+     * @return Model
      */
-    public function defaultSyncModelRelations($model, $data)
+    public function defaultSyncModelRelations(Model $model, array $data): Model
     {
         foreach ($this->getModelRelations() as $relationName => $relation) {
-            // Check if exist relation in data
-            if (!in_array($relationName, $this->replaceSyncModelRelations) && array_key_exists($relationName, $data)) {
-                $relationInstance = $model->$relationName(); //Instance the relation
-                $relationType = $relation['type'] ?? null; //Validate instances
-                $updateOrCreate = $relationType === 'updateOrCreateMany'; //Check if updateOrCreate
-                $compareKeys = $relation['compareKeys'] ?? []; //Get the compare keys
-
-                //Default laravel relation
-                switch ($relation['relation']) {
-                    case 'hasMany':
-                        if ($updateOrCreate) {
-                            // Get the related repository
-                            $relatedRepository = $relationInstance->getRelated()->repository ?? null;
-                            // Dynamically determine the foreign key for the relation
-                            $foreignKey = $relationInstance->getForeignKeyName();
-
-                            if ($relatedRepository && $foreignKey) {
-                                //Init the related repository
-                                $relatedRepository = app($relatedRepository);
-                                //update or create each related record
-                                foreach ($data[$relationName] as $item) {
-                                    if (!empty(array_diff($compareKeys, array_keys($item)))) continue; // Skip if missing keys
-                                    // Build the comparison array dynamically
-                                    $compare = array_merge(
-                                        [
-                                            $foreignKey => $model->id
-                                        ],
-                                        array_intersect_key($item, array_flip($compareKeys))
-                                    );
-                                    // Use updateOrCreate with the dynamic compare keys
-                                    $relatedRepository->updateOrCreate($compare, $item);
-                                }
-                            }
-                        } else {
-                            // Validate if exist relation with items
-                            $model->$relationName()->forceDelete();
-                            // Create and Set relation to Model
-                            $model->setRelation($relationName, $model->$relationName()->createMany($data[$relationName]));
-                        }
-                        break;
-                    case 'belongsToMany':
-                        if ($updateOrCreate) {
-                            $pivotTable = $relationInstance->getTable(); // Pivot table name
-                            $foreignKey = $relationInstance->getRelatedPivotKeyName(); // Foreign key in pivot
-                            $modelForeignKey = $relationInstance->getForeignPivotKeyName(); // Foreign key in pivot
-
-                            if ($pivotTable && $foreignKey && $modelForeignKey) {
-                                //update or create each related record
-                                foreach ($data[$relationName] as $item) {
-                                    // Validate required keys
-                                    if (!isset($item[$foreignKey]) || !empty(array_diff($compareKeys, array_keys($item)))) continue;
-
-                                    $relatedId = $item[$foreignKey]; // Get related ID dynamically
-                                    unset($item[$foreignKey]); // Remove related ID from pivot data
-
-                                    // Build lookup keys for update
-                                    $lookupKeys = array_merge(
-                                        [$modelForeignKey => $model->id, $foreignKey => $relatedId],
-                                        array_intersect_key($item, array_flip($compareKeys))
-                                    );
-
-                                    // Update if exists, insert if not
-                                    \DB::table($pivotTable)->updateOrInsert(
-                                        $lookupKeys,
-                                        array_merge($item, ['updated_at' => now(), 'created_at' => now()])
-                                    );
-                                }
-                                $model->setRelation($relationName, $model->$relationName);
-                            }
-                        } else {
-                            $model->$relationName()->sync($data[$relationName]);
-                            $model->setRelation($relationName, $model->$relationName);
-                        }
-                        break;
-                }
+            if (
+                in_array($relationName, $this->replaceSyncModelRelations) ||
+                !array_key_exists($relationName, $data)
+            ) {
+                continue;
             }
+
+            $relationInstance = $model->$relationName();
+            $relationType = $relation['type'] ?? null;
+            $compareKeys = $relation['compareKeys'] ?? [];
+
+            match ($relation['relation']) {
+                'hasMany' => $this->handleHasManySync($model, $relationName, $relationInstance, $data[$relationName], $relationType, $compareKeys),
+                'belongsToMany' => $this->handleBelongsToManySync($model, $relationName, $relationInstance, $data[$relationName], $relationType, $compareKeys),
+                default => null,
+            };
         }
 
-        //Response
         return $model;
     }
 
     /**
-     * Method to sync Model Relations
-     *
-     * @param $model ,$data
-     * @return $model
+     * @param Model $model
+     * @param string $relationName
+     * @param $relationInstance
+     * @param array $items
+     * @param string|null $type
+     * @param array $compareKeys
+     * @return void
      */
-    public function syncModelRelations($model, $data)
+    protected function handleHasManySync(
+        Model   $model,
+        string  $relationName,
+                $relationInstance,
+        array   $items,
+        ?string $type,
+        array   $compareKeys
+    ): void
     {
-        //Get model relations data from attribute of model
-        $modelRelationsData = $this->getModelRelations();
+        if ($type === 'updateOrCreateMany') {
+            $relatedRepositoryClass = $relationInstance->getRelated()->repository ?? null;
+            $foreignKey = $relationInstance->getForeignKeyName();
 
-        /**
-         * Note: Add relation name to replaceSyncModelRelations attribute to replace it
-         *
-         * Example to sync relations
-         * if (array_key_exists(<relationName>, $data)){
-         *    $model->setRelation(<relationName>, $model-><relationName>()->sync($data[<relationName>]));
-         * }
-         *
-         */
+            if (!$relatedRepositoryClass || !$foreignKey) return;
 
-        //Response
+            $repo = app($relatedRepositoryClass);
+
+            foreach ($items as $item) {
+                if (!empty(array_diff($compareKeys, array_keys($item)))) continue;
+
+                $compare = array_merge(
+                    [$foreignKey => $model->id],
+                    array_intersect_key($item, array_flip($compareKeys))
+                );
+
+                $repo->updateOrCreate($compare, $item);
+            }
+        } else {
+            $relationInstance->forceDelete();
+            $model->setRelation($relationName, $relationInstance->createMany($items));
+        }
+    }
+
+    /**
+     * @param Model $model
+     * @param string $relationName
+     * @param $relationInstance
+     * @param array $items
+     * @param string|null $type
+     * @param array $compareKeys
+     * @return void
+     */
+    protected function handleBelongsToManySync(
+        Model   $model,
+        string  $relationName,
+                $relationInstance,
+        array   $items,
+        ?string $type,
+        array   $compareKeys
+    ): void
+    {
+        if ($type === 'updateOrCreateMany') {
+            $pivotTable = $relationInstance->getTable();
+            $foreignKey = $relationInstance->getRelatedPivotKeyName();
+            $modelKey = $relationInstance->getForeignPivotKeyName();
+
+            foreach ($items as $item) {
+                if (!isset($item[$foreignKey]) || !empty(array_diff($compareKeys, array_keys($item)))) continue;
+
+                $relatedId = $item[$foreignKey];
+                unset($item[$foreignKey]);
+
+                $lookup = array_merge(
+                    [$modelKey => $model->id, $foreignKey => $relatedId],
+                    array_intersect_key($item, array_flip($compareKeys))
+                );
+
+                DB::table($pivotTable)->updateOrInsert(
+                    $lookup,
+                    array_merge($item, ['updated_at' => now(), 'created_at' => now()])
+                );
+            }
+
+        } else {
+            $relationInstance->sync($items);
+        }
+        $model->setRelation($relationName, $model->$relationName);
+    }
+
+    /**
+     * @param Model $model
+     * @param array $data
+     * @return Model
+     */
+    public function syncModelRelations(Model $model, array $data): Model
+    {
         return $model;
     }
 
@@ -360,11 +310,11 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
         //Event creating model
         $this->dispatchesEvents(['eventName' => 'creating', 'data' => $data]);
 
-        // Call function before create it, and take all change from $data
+        // allow action before create
         $this->beforeCreate($data);
 
         //Create model
-        $model = $this->model->create($data);
+        $model = $this->model->query()->create($data);
 
         // Default sync model relations
         $model = $this->defaultSyncModelRelations($model, $data);
@@ -372,7 +322,7 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
         // Custom sync model relations
         $model = $this->syncModelRelations($model, $data);
 
-        // Call function after create it, and take all change from $data and $model
+        // allow action after creation
         $this->afterCreate($model, $data);
 
         //Event created model
@@ -383,133 +333,57 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
     }
 
     /**
-     * Method to override in the child class if there need modify the data before create
-     * @param $data
+     * @param array $data
      * @return void
      */
-    public function beforeCreate(&$data)
+    public function beforeCreate(array &$data): void
     {
     }
 
     /**
-     * Method to override in the child class if there need modify the data after create
-     * @param $model ,$data
+     * @param Model $model
+     * @param array $data
      * @return void
      */
-    public function afterCreate(&$model, &$data)
+    public function afterCreate(Model &$model, array &$data): void
     {
     }
 
     /**
      * @param object|null $params
-     * @return Collection
+     * @return Collection|Builder
      */
-    public function getItemsBy(?object $params = null): Collection
+    public function getItemsBy(?object $params = null): Collection|Builder
     {
-        // compare parameters validate use of old query
+        $params = $params ?? (object)[];
+        $filters = $params->filter ?? (object)[];
         $differentParameters = $this->compareParameters($params);
-
-        //reusing query if exist
+        $this->params = $params;
+        // Reuse the query if already exist
         if (empty($this->query) || $differentParameters) {
-            //Instance Query
             $query = $this->model->query();
-
-            //Include relationships
             $query = $this->includeToQuery($query, $params, "index");
-
-            //Filter Query
-            if (isset($params->filter)) {
-                $filters = $params->filter; //Short data filter
-                //Instance model relations
-                $modelRelations = $this->getModelRelations();
-                //Instance model fillable
-                $modelFillable = array_merge(
-                    $this->model->getFillable(),
-                    ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']
-                );
-                $translatableAttributes = $this->model->translatedAttributes ?? [];
-                //Set fiter order to params.order: TODO: to keep and don't break old version api
-                if (isset($filters->order) && !isset($params->order)) $params->order = $filters->order;
-                //Add Requested Filters
-                foreach ($filters as $filterName => $filterValue) {
-                    $filterNameSnake = camelToSnake($filterName); //Get filter name as snakeCase
-                    if (!in_array($filterName, $this->replaceFilters)) {
-                        //Add fillable filter
-                        if (in_array($filterNameSnake, $modelFillable)) {
-                            //instance an own filter way when the filter name is ID
-                            if ($filterNameSnake == "id") $filterValue = (object)["where" => 'in', "value" => (array)$filterValue];
-                            //Validate if filter is an array put where as "in" type
-                            if (is_array($filterValue) && !isset($filterValue['where'])) $filterValue = (object)["where" => 'in', "value" => $filterValue];
-                            //Filter by parent ID
-                            if ($filterNameSnake == "parent_id" && !$filterValue) $filterValue = (object)["where" => 'null'];
-                            //Set filter
-                            $query = $this->setFilterQuery($query, $filterValue, $filterNameSnake);
-                        }
-                        //Add filter by translatables attributes
-                        if (in_array($filterNameSnake, $translatableAttributes)) {
-                            $query->whereHas('translations', function ($query) use ($filters, $filterNameSnake, $filterValue) {
-                                $query->where('locale', $filters->locale ?? \App::getLocale());
-                                $query = $this->setFilterQuery($query, $filterValue, $filterNameSnake);
-                            });
-                        }
-                        //Add relation filter
-                        $relationPath = explode('.', $filterName);
-                        if (in_array($relationPath[0], array_keys($modelRelations))) {
-                            $query = $this->setFilterQuery($query, (object)[
-                                'where' => $modelRelations[$relationPath[0]]['relation'],
-                                'value' => $filterValue
-                            ], $relationPath);
-                        }
-                    }
-                }
-
-                //Filter by date
-                if (isset($filters->date)) {
-                    $date = $filters->date; //Short filter date
-                    $date->field = $date->field ?? 'created_at';
-                    if (isset($date->from)) //From a date
-                        $query->whereDate($date->field, '>=', $date->from);
-                    if (isset($date->to)) //to a date
-                        $query->whereDate($date->field, '<=', $date->to);
-                }
-
-                //Audit filter withTrashed
-                if (isset($filters->withTrashed) && $filters->withTrashed) $query->withTrashed();
-
-                //Audit filter onlyTrashed
-                if (isset($filters->onlyTrashed) && $filters->onlyTrashed) $query->onlyTrashed();
-
-                //Filter by not organization
-                if (isset($filters->withoutTenancy) && $filters->withoutTenancy) $query->withoutTenancy();
-
-                //Set params into filters, to keep uploader code
-                if (is_array($filters)) $filters = (object)$filters;
-
-                //Add model filters
-                $query = $this->filterQuery($query, $filters, $params);
-            }
-
-            //Order Query
-            $query = $this->orderQuery($query, $params->order ?? true, $filters->noSortOrder ?? false, $params->orderByRaw ?? null);
+            $query = $this->applyFiltersToQuery($query, $filters, $params);
+            $query = $this->orderQuery(
+                $query,
+                $params->order ?? true,
+                $filters->noSortOrder ?? false,
+                $params->orderByRaw ?? null
+            );
+            $this->query = $query;
         } else {
-            //save parameters validate use of old query
-            $this->params = $params;
-            //reusing query if exist
             $query = $this->query;
         }
 
         //Response as query
         if (isset($params->returnAsQuery) && $params->returnAsQuery) return $query;
 
-        //Response paginate
-        else if (isset($params->page) && $params->page) $response = $query->paginate($params->take, ['*'], null, $params->page);
-        //Response complete
-        else {
-            if (isset($params->take) && $params->take) $query->take($params->take); //Take
-            $response = $query->get();
-        }
+        //Get response
+        $response = !empty($params->page)
+            ? $query->paginate($params->take ?? 12, ['*'], null, $params->page)
+            : ($params->take ? $query->take($params->take)->get() : $query->get());
 
-        //Event retrived model
+        //Event return model
         $this->dispatchesEvents(['eventName' => 'retrievedIndex', 'data' => [
             "requestParams" => $params,
             "response" => $response,
@@ -520,117 +394,133 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
     }
 
     /**
-     * Method to get model by criteria
-     *
-     * @param $criteria
-     * @param $params
-     * @return mixed
+     * @param string|int $criteria
+     * @param object|null $params
+     * @return Model|Builder|null
      */
-    public function getItem(string|int $criteria, ?object $params = null): ?Model
+    public function getItem(string|int $criteria, ?object $params = null): Model|Builder|null
     {
-        // compare parameters validate use of query
+        $params = $params ?? (object)[];
+        $filters = $params->filter ?? (object)[];
         $differentParameters = $this->compareParameters($params);
-        //reusing query if exist
+
         if (empty($this->query) || $differentParameters) {
-            $filter = $params->filter ?? (object)[];
-            $translatableAttributes = $this->model->translatedAttributes ?? [];
-
-            //Instance Query
             $query = $this->model->query();
-
-            //Include relationships
             $query = $this->includeToQuery($query, $params, "show");
 
-            //Get fields to use as criteria filter
-            $criteriaFields = $params->filter->field ?? ['id'];
-            if (!is_array($criteriaFields)) $criteriaFields = [$criteriaFields];
+            $criteriaFields = (array)($filters->field ?? ['id']);
+            $translatableAttrs = $this->model->translatedAttributes ?? [];
+            $locale = $filters->locale ?? app()->getLocale();
 
-            // Set filter column translatable for criteria
-            $translatableFields = array_intersect($criteriaFields, $translatableAttributes);
-            if (count($translatableFields)) {
-                $query->whereHas('translations', function ($query) use ($criteria, $filter, $translatableFields) {
-                    $query->where('locale', $filter->locale ?? \App::getLocale())
-                        ->where(function ($query) use ($criteria, $translatableFields) {
-                            foreach ($translatableFields as $field) {
-                                $query->orWhere($field, $criteria);
-                            }
+            $translatableFields = array_intersect($criteriaFields, $translatableAttrs);
+            $modelFields = array_diff($criteriaFields, $translatableFields);
+
+            if (!empty($translatableFields)) {
+                $query->whereHas('translations', function ($q) use ($locale, $criteria, $translatableFields) {
+                    $q->where('locale', $locale)->where(function ($subQ) use ($criteria, $translatableFields) {
+                        //TODO: Does it working with reduce?
+                        collect($translatableFields)->reduce(function ($carry, $field) use ($subQ, $criteria) {
+                            return $subQ->orWhere($field, $criteria);
                         });
+                    });
                 });
             }
 
-            // Set filter column for criteria
-            $modelFields = array_diff($criteriaFields, $translatableAttributes);
-            if (count($modelFields)) {
-                $query->where(function ($query) use ($modelFields, $criteria) {
-                    foreach ($modelFields as $field) {
-                        $query->orWhere($this->model->getTable() . "." . $field, $criteria);
-                    }
+            if (!empty($modelFields)) {
+                $table = $this->model->getTable();
+                $query->where(function ($q) use ($modelFields, $criteria, $table) {
+                    //TODO: Does it working with reduce?
+                    collect($modelFields)->reduce(function ($carry, $field) use ($q, $criteria, $table) {
+                        return $q->orWhere("{$table}.{$field}", $criteria);
+                    });
                 });
             }
 
-            //Filter Query
-            if (isset($params->filter)) {
-                $filters = $params->filter; //Short data filter
-                //Instance model fillable
-                $modelFillable = array_merge(
-                    $this->model->getFillable(),
-                    ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']
-                );
-
-                //Add Requested Filters
-                foreach ($filters as $filterName => $filterValue) {
-                    $filterNameSnake = camelToSnake($filterName); //Get filter name as snakeCase
-                    if (!in_array($filterName, $this->replaceFilters)) {
-                        //Add fillable filter
-                        if (in_array($filterNameSnake, $modelFillable)) {
-                            $query = $this->setFilterQuery($query, $filterValue, $filterNameSnake);
-                        }
-                    }
-                }
-
-                //Filter by not organization
-                if (isset($filters->withoutTenancy) && $filters->withoutTenancy) $query->withoutTenancy();
-
-                //Set params into filters, to keep uploader code
-                if (is_array($filters)) $filters = (object)$filters;
-
-                //Add model filters
-                $query = $this->filterQuery($query, $filters, $params);
-            }
+            $query = $this->applyFiltersToQuery($query, $filters, $params);
+            $this->query = $query;
         } else {
-            //reusing query if exist
             $query = $this->query;
         }
 
-        //Response as query
-        if (isset($params->returnAsQuery) && $params->returnAsQuery) return $query;
+        if (!empty($params->returnAsQuery)) return $query;
 
-        //Request
         $response = $query->first();
 
-        //Event retrived model
-        $this->dispatchesEvents(['eventName' => 'retrievedShow', 'data' => [
-            "requestParams" => $params,
-            "response" => $response,
-            "criteria" => $criteria
-        ]]);
+        $this->dispatchesEvents([
+            'eventName' => 'retrievedShow',
+            'data' => [
+                "requestParams" => $params,
+                "response" => $response,
+                "criteria" => $criteria
+            ]
+        ]);
 
-        //Response
         return $response;
     }
 
+
+    protected function applyFiltersToQuery(Builder $query, object $filters, object $params): Builder
+    {
+        $modelRelations = $this->getModelRelations();
+        $modelFillable = array_merge($this->model->getFillable(), ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']);
+        $translatableAttributes = $this->model->translatedAttributes ?? [];
+
+        foreach ($filters as $filterName => $filterValue) {
+            $filterNameSnake = camelToSnake($filterName);
+            if (array_key_exists($filterName, $this->replaceFilters)) continue;
+
+            if (array_key_exists($filterNameSnake, $modelFillable)) {
+                if ($filterNameSnake == "id") $filterValue = (object)["where" => 'in', "value" => (array)$filterValue];
+                if (is_array($filterValue) && !isset($filterValue['where'])) $filterValue = (object)["where" => 'in', "value" => $filterValue];
+                if ($filterNameSnake == "parent_id" && !$filterValue) $filterValue = (object)["where" => 'null'];
+                $query = FilterQueryBuilder::apply($query, $filterValue, $filterNameSnake);
+            }
+
+            if (array_key_exists($filterNameSnake, $translatableAttributes)) {
+                $query->whereHas('translations', function ($q) use ($filters, $filterNameSnake, $filterValue) {
+                    $q->where('locale', $filters->locale ?? app()->getLocale());
+                    ilterQueryBuilder::apply($q, $filterValue, $filterNameSnake);
+                });
+            }
+
+            $relationPath = explode('.', $filterName);
+            if (array_key_exists($relationPath[0], $modelRelations)) {
+                $query = ilterQueryBuilder::apply($query, (object)[
+                    'where' => $modelRelations[$relationPath[0]]['relation'],
+                    'value' => $filterValue
+                ], $relationPath);
+            }
+        }
+
+        if (!empty($filters->date)) {
+            $date = $filters->date;
+            $field = $date->field ?? 'created_at';
+            if (!empty($date->from)) $query->whereDate($field, '>=', $date->from);
+            if (!empty($date->to)) $query->whereDate($field, '<=', $date->to);
+        }
+
+        if (!empty($filters->withTrashed)) $query->withTrashed();
+        if (!empty($filters->onlyTrashed)) $query->onlyTrashed();
+        if (!empty($filters->withoutTenancy)) $query->withoutTenancy();
+
+        return $this->filterQuery($query, $filters, $params);
+    }
+
+    /**
+     * @param Collection $models
+     * @param object $params
+     * @return Collection
+     */
     public function getItemsByTransformed(Collection $models, object $params): Collection
     {
         return json_decode(json_encode(CoreResource::transformData($models)));
     }
 
     /**
-     * Method to update model by criteria
-     *
-     * @param $criteria
-     * @param $data
-     * @param $params
-     * @return mixed
+     * @param string|int $criteria
+     * @param array $data
+     * @param object|null $params
+     * @return Model|null
      */
     public function updateBy(string|int $criteria, array $data, ?object $params = null): ?Model
     {
@@ -651,10 +541,10 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
             // Update attributes
             $nonColumnAttributes = ['medias_single', 'medias_multi'];
             $fillableData = collect($data)->except($nonColumnAttributes)->toArray();
-            $model->fill((array)$fillableData);
+            $model->fill($fillableData);
             // Save model if dirty
             if ($model->isDirty()) $model->save();
-            // Check for dirty translations and fire the touch to save model timestamp
+            // Check for dirty translations and fire the touch to save the model timestamp
             if (method_exists($model, 'translations')) {
                 foreach ($model->translations as $translation) {
                     if ($translation->isDirty()) {
@@ -667,7 +557,7 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
             $model = $this->defaultSyncModelRelations($model, $data);
             // Custom Sync model relations
             $model = $this->syncModelRelations($model, $data);
-            // Call function after update it, and take all change from $data and $model
+            // Call function after update it, and take all changes from $data and $model
             $this->afterUpdate($model, $data);
             //Event updated model
             $this->dispatchesEvents([
@@ -683,29 +573,26 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
     }
 
     /**
-     * Method to override in the child class if there need modify the data before update
      * @param $data
      * @return void
      */
-    public function beforeUpdate(&$data)
+    public function beforeUpdate(&$data): void
     {
     }
 
     /**
-     * Method to override in the child class if there need modify the data after update
-     * @param $model , $data
+     * @param $model
+     * @param $data
      * @return void
      */
-    public function afterUpdate(&$model, &$data)
+    public function afterUpdate(&$model, &$data): void
     {
     }
 
     /**
-     * Method to do a bulk order
-     *
-     * @param $data
-     * @param $params
-     * @return mixed|void
+     * @param array $data
+     * @param object|null $params
+     * @return Collection
      */
     public function bulkOrder(array $data, ?object $params = null): Collection
     {
@@ -713,53 +600,49 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
         $orderField = $params->filter->field ?? 'position';
         //loop through data to update the position according to index data
         foreach ($data as $key => $item) {
-            $this->model->find($item['id'])->update([$orderField => ++$key]);
+            $this->model->query()->find($item['id'])->update([$orderField => ++$key]);
         }
         //Response
-        return $this->model->whereIn('id', array_column($data, "id"))->get();
+        return $this->model->query()->whereIn('id', array_column($data, "id"))->get();
     }
 
     /**
-     * Method to do a bulk update models
-     *
-     * @param $data
-     * @param $params
-     * @return mixed|void
+     * @param array $data
+     * @param object|null $params
+     * @return array
      */
-    public function bulkUpdate(array $data, ?object $params = null): Collection
+    public function bulkUpdate(array $data, ?object $params = null): array
     {
         //Instance the orderField
         $fieldName = $params->filter->field ?? 'id';
+        $updated = [];
         //loop through data to update the position according to index data
-        foreach ($data as $key => $item) {
-            $this->updateBy($item[$fieldName], $item, $params);
+        foreach ($data as $item) {
+            $updated[] = $this->updateBy($item[$fieldName], $item, $params);
         }
         //Response
-        return true;
+        return $updated;
     }
 
     /**
-     * Method to do a bulk create models
-     *
-     * @param $data
-     * @return mixed|void
+     * @param array $data
+     * @return array
      */
-    public function bulkCreate(array $data): Collection
+    public function bulkCreate(array $data): array
     {
+        $created = [];
         //loop through data to create the position according to index data
-        foreach ($data as $key => $item) {
-            $this->create($item);
+        foreach ($data as $item) {
+            $created[] = $this->create($item);
         }
         //Response
-        return true;
+        return $created;
     }
 
     /**
-     * Method to delete model by criteria
-     *
-     * @param $criteria
-     * @param $params
-     * @return mixed
+     * @param string|int $criteria
+     * @param object|null $params
+     * @return bool
      */
     public function deleteBy(string|int $criteria, ?object $params = null): bool
     {
@@ -769,7 +652,7 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
         //Check field name to criteria
         if (isset($params->filter->field)) $field = $params->filter->field;
 
-        //Include trashed records
+        //Include trashed records | SoftDeletes
         if ($this->hasSoftDeletes()) $query->withTrashed();
 
         //get model
@@ -792,11 +675,9 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
     }
 
     /**
-     * Method to delete model by criteria
-     *
-     * @param $criteria
-     * @param $params
-     * @return mixed
+     * @param string|int $criteria
+     * @param object|null $params
+     * @return Model
      */
     public function restoreBy(string|int $criteria, ?object $params = null): Model
     {
@@ -806,7 +687,7 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
         //Check field name to criteria
         if (isset($params->filter->field)) $field = $params->filter->field;
 
-        //get model
+        //get model | SoftDeletes
         $model = $query->where($field ?? 'id', $criteria)->withTrashed()->first();
 
         //Delete Model
@@ -817,119 +698,83 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
     }
 
     /**
-     * Dispathes events
-     *
-     * @param $params
+     * @param array $params
+     * @return void
      */
-    public function dispatchesEvents($params)
+    public function dispatchesEvents(array $params): void
     {
-        //Instance parameters
         $eventName = $params['eventName'];
         $data = $params['data'] ?? [];
         $criteria = $params['criteria'] ?? null;
         $model = $params['model'] ?? null;
 
-        //Dispatch retrieved events
-        if ($eventName == 'retrievedIndex') {
-            //Emit event retrievedWithBindings
-            if (method_exists($this->model, 'retrievedIndexCrudModel'))
-                $this->model->retrievedIndexCrudModel(['data' => $data]);
+        // Define model method callbacks for specific events
+        $modelEventCallbacks = [
+            'retrievedIndex' => ['object' => $this->model, 'method' => 'retrievedIndexCrudModel', 'args' => ['data' => $data]],
+            'retrievedShow' => ['object' => $this->model, 'method' => 'retrievedShowCrudModel', 'args' => ['data' => $data]],
+            'creating' => ['object' => $this->model, 'method' => 'creatingCrudModel', 'args' => ['data' => $data]],
+            'created' => ['object' => $model, 'method' => 'createdCrudModel', 'args' => ['data' => $data]],
+            'updating' => ['object' => $this->model, 'method' => 'updatingCrudModel', 'args' => ['data' => $data, 'params' => $params, 'criteria' => $criteria]],
+            'updated' => ['object' => $model, 'method' => 'updatedCrudModel', 'args' => ['data' => $data, 'params' => $params, 'criteria' => $criteria]],
+            'deleting' => ['object' => $model, 'method' => 'deletingCrudModel', 'args' => ['params' => $params, 'criteria' => $criteria]],
+        ];
+
+        // Execute the matching model method if it exists
+        if (isset($modelEventCallbacks[$eventName])) {
+            $callback = $modelEventCallbacks[$eventName];
+            if (method_exists($callback['object'], $callback['method'])) {
+                $callback['object']->{$callback['method']}($callback['args']);
+            }
         }
 
-        //Dispatch retrieved events
-        if ($eventName == 'retrievedShow') {
-            //Emit event retrievedWithBindings
-            if (method_exists($this->model, 'retrievedShowCrudModel'))
-                $this->model->retrievedShowCrudModel(['data' => $data]);
-        }
-
-        //Dispatch creating events
-        if ($eventName == 'creating') {
-            //Emit event creatingWithBindings
-            if (method_exists($this->model, 'creatingCrudModel'))
-                $this->model->creatingCrudModel(['data' => $data]);
-        }
-
-        //Dispatch created events
-        if ($eventName == 'created') {
-            //Emit event createdWithBindings
-            if (method_exists($model, 'createdCrudModel'))
-                $model->createdCrudModel(['data' => $data]);
-            //Event to ADD media
-            /*if (method_exists($model, 'mediaFiles'))
-              event(new CreateMedia($model, $data));*/
-        }
-
-        //Dispatch updating events
-        if ($eventName == 'updating') {
-            //Emit event updatingWithBindings
-            if (method_exists($this->model, 'updatingCrudModel'))
-                $this->model->updatingCrudModel(['data' => $data, 'params' => $params, 'criteria' => $criteria]);
-        }
-
-        //Dispatch updated events
-        if ($eventName == 'updated') {
-            //Emit event updatedWithBindings
-            if (method_exists($model, 'updatedCrudModel'))
-                $model->updatedCrudModel(['data' => $data, 'params' => $params, 'criteria' => $criteria]);
-            //Event to Update media
-            /*if (method_exists($model, 'mediaFiles'))
-              event(new UpdateMedia($model, $data));*/
-        }
-
-        //Dispatch deleting events
-        if ($eventName == 'deleting') {
-            //Emit event deletingWithBindings
-            if (method_exists($model, 'deletingCrudModel'))
-                $model->deletingCrudModel(['params' => $params, 'criteria' => $criteria]);
-        }
-
-        //Dispatch deleted events
-        if ($eventName == 'deleted') {
-        }
-
-        //Dispatches model events
+        // Dispatch custom model-defined events (e.g., from config)
         $dispatchesEvents = $this->model->dispatchesEventsWithBindings ?? [];
-        if (isset($dispatchesEvents[$eventName]) && count($dispatchesEvents[$eventName])) {
-            //Dispath every model events from eventName
+        if (!empty($dispatchesEvents[$eventName])) {
             foreach ($dispatchesEvents[$eventName] as $event) {
-                //Get the module name from path event parameter
-                $moduleName = explode("\\", $event['path'])[1];
-                //Validate if module is enabled to dispath event
-                if (is_module_enabled($moduleName)) event(new $event['path']([
-                    'data' => $data,
-                    'extraData' => $event['extraData'] ?? [],
-                    'criteria' => $criteria,
-                    'model' => $model
-                ]));
+                $moduleName = explode("\\", $event['path'])[1] ?? null;
+                if ($moduleName && Module::isEnabled($moduleName)) {
+                    event(new $event['path']([
+                        'data' => $data,
+                        'extraData' => $event['extraData'] ?? [],
+                        'criteria' => $criteria,
+                        'model' => $model
+                    ]));
+                }
             }
         }
     }
 
+
     /**
-     * Function to validate parameters
-     *
-     * @param $params
+     * @param object $params
+     * @return bool
      */
-    public function compareParameters($params): bool
+    public function compareParameters(object $params): bool
     {
         $newParams = json_encode($params);
         $queryParams = json_encode($this->params);
         return $newParams != $queryParams;
     }
 
-
-    private function hasSoftDeletes()
+    /**
+     * @return bool
+     */
+    private function hasSoftDeletes(): bool
     {
         return false;
         //return in_array(SoftDeletes::class, class_uses_recursive($this->model));
     }
 
-    public function updateOrCreate(array $validationData,  array $data): Model
+    /**
+     * @param array $validation
+     * @param array $data
+     * @return Model
+     */
+    public function updateOrCreate(array $validation, array $data): Model
     {
         //Search the record
-        $model = $this->getItemsBy((object)['filter' => (object)$validationData])->first();
-        $modelData = array_merge($validationData, $data);
+        $model = $this->getItemsBy((object)['filter' => (object)$validation])->first();
+        $modelData = array_merge($validation, $data);
         //update Or Create the record
         if ($model) $this->updateBy($model->id, $modelData);
         else $this->create($modelData);
@@ -938,13 +783,11 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
     }
 
     /**
-     * Return a dashboard information
-     *
-     * @param $params
-     * @return array
+     * @param object|null $params
+     * @return Collection
      */
     public function getDashboard(?object $params): Collection
     {
-        return [];
+        return new Collection();
     }
 }

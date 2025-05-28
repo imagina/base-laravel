@@ -4,22 +4,22 @@ namespace Imagina\Icore\Repositories;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 
 interface CoreRepository extends BaseRepository
 {
     /**
      * @param object|null $params
-     * @return Collection
+     * @return Collection|Builder
      */
-    public function getItemsBy(?object $params): Collection;
+    public function getItemsBy(?object $params): Collection|Builder;
 
     /**
      * @param string|int $criteria
      * @param object|null $params
-     * @return Model|null
+     * @return Model|Builder|null
      */
-    public function getItem(string|int $criteria, ?object $params): ?Model;
+    public function getItem(string|int $criteria, ?object $params): Model|Builder|null;
 
     /**
      * @param array $data
@@ -61,13 +61,13 @@ interface CoreRepository extends BaseRepository
      * @param object|null $params
      * @return Collection|null
      */
-    public function bulkUpdate(array $data, ?object $params): ?Collection;
+    public function bulkUpdate(array $data, ?object $params): array;
 
     /**
      * @param array $data
      * @return Collection
      */
-    public function bulkCreate(array $data): Collection;
+    public function bulkCreate(array $data): array;
 
     /**
      * @param array $validation

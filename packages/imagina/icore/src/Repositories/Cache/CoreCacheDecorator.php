@@ -4,6 +4,7 @@ namespace Imagina\Icore\Repositories\Cache;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 use Imagina\Icore\Repositories\BaseRepository;
 
 abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepository
@@ -146,4 +147,13 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
         return $this->repository->updateOrCreate($validationData, $data);
     }
 
+    /**
+     * @param object $params
+     * @param string|int|null $criteria
+     * @return Builder
+     */
+    public function getOrCreateQuery(object $params, string|int|null $criteria = null): Builder
+    {
+        return $this->repository->getOrCreateQuery($params, $criteria);
+    }
 }
