@@ -2,66 +2,97 @@
 
 namespace Imagina\Icore\Repositories;
 
-use Imagina\Icore\Repositories\BaseRepository;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 
-/**
- * Interface Core Crud Repository
- */
 interface CoreRepository extends BaseRepository
 {
-  /**
-   * @return mixed
-   */
-  public function getItemsBy($params);
+    /**
+     * @param object|null $params
+     * @return Collection
+     */
+    public function getItemsBy(?object $params): Collection;
 
-  /**
-   * @return mixed
-   */
-  public function getItem($criteria, $params = false);
+    /**
+     * @param string|int $criteria
+     * @param object|null $params
+     * @return Model|null
+     */
+    public function getItem(string|int $criteria, ?object $params): ?Model;
 
-  /**
-   * @return mixed
-   */
-  public function create($data);
+    /**
+     * @param array $data
+     * @return Model
+     */
+    public function create(array $data): Model;
 
-  /**
-   * @return mixed
-   */
-  public function updateBy($criteria, $data, $params = false);
+    /**
+     * @param string|int $criteria
+     * @param array $data
+     * @param object|null $params
+     * @return Model|null
+     */
+    public function updateBy(string|int $criteria, array $data, ?object $params): ?Model;
 
-  /**
-   * @return mixed
-   */
-  public function deleteBy($criteria, $params = false);
+    /**
+     * @param string|int $criteria
+     * @param object|null $params
+     * @return bool
+     */
+    public function deleteBy(string|int $criteria, ?object $params): bool;
 
-  /**
-   * @return mixed
-   */
-  public function restoreBy($criteria, $params = false);
+    /**
+     * @param string|int $criteria
+     * @param object|null $params
+     * @return Model|null
+     */
+    public function restoreBy(string|int $criteria, ?object $params): ?Model;
 
-  /**
-   * @return mixed
-   */
-  public function bulkOrder($data, $params = false);
+    /**
+     * @param array $data
+     * @param object|null $params
+     * @return Collection
+     */
+    public function bulkOrder(array $data, ?object $params): Collection;
 
-  /**
-   * @return mixed
-   */
-  public function bulkUpdate($data, $params = false);
+    /**
+     * @param array $data
+     * @param object|null $params
+     * @return Collection|null
+     */
+    public function bulkUpdate(array $data, ?object $params): ?Collection;
 
-  /**
-   * @return mixed
-   */
-  public function bulkCreate($data);
+    /**
+     * @param array $data
+     * @return Collection
+     */
+    public function bulkCreate(array $data): Collection;
 
-  /**
-   * @param $data
-   * @return mixed
-   */
-  public function updateOrCreate($validation, $data);
+    /**
+     * @param array $validation
+     * @param array $data
+     * @return Model
+     */
+    public function updateOrCreate(array $validation, array $data): Model;
 
-  /**
-   * @return mixed
-   */
-  public function getDashboard($params);
+    /**
+     * @param Collection $models
+     * @param object $params
+     * @return Collection
+     */
+    public function getItemsByTransformed(Collection $models, object $params): Collection;
+
+    /**
+     * @param object $params
+     * @param string|int|null $criteria
+     * @return Builder
+     */
+    public function getOrCreateQuery(object $params, string|int|null $criteria = null): Builder;
+
+    /**
+     * @param object|null $params
+     * @return Collection
+     */
+    public function getDashboard(?object $params): Collection;
 }
