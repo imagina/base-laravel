@@ -31,6 +31,14 @@ abstract class CoreApiController
         ];
     }
 
+    protected function getHttpStatusCode(\Exception $e): int
+    {
+        $validCodes = [204, 400, 401, 403, 404, 406, 409, 422, 502, 503, 504];
+        $code = $e->getCode();
+
+        return in_array($code, $validCodes) ? $code : 500;
+    }
+
     protected function validateWithModelRules(Request $request, string $action): void
     {
         $class = $this->model->requestValidation[$action] ?? null;
@@ -85,7 +93,7 @@ abstract class CoreApiController
             DB::commit(); //Commit to Data Base
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
-            $status = $e->getCode();
+            $status = $this->getHttpStatusCode($e);
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
         //Return response
@@ -112,7 +120,7 @@ abstract class CoreApiController
             //If request pagination add meta-page
             if ($params->page) $response['meta'] = ['page' => $this->pageTransformer($models)];
         } catch (\Exception $e) {
-            $status = $e->getCode();
+            $status = $this->getHttpStatusCode($e);
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
@@ -142,7 +150,7 @@ abstract class CoreApiController
             //Response
             $response = ['data' => CoreResource::transformData($model)];
         } catch (\Exception $e) {
-            $status = $e->getCode();
+            $status = $this->getHttpStatusCode($e);
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
@@ -182,7 +190,7 @@ abstract class CoreApiController
             DB::commit(); //Commit to DataBase
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
-            $status = $e->getCode();
+            $status = $this->getHttpStatusCode($e);
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
@@ -216,7 +224,7 @@ abstract class CoreApiController
             DB::commit(); //Commit to Data Base
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
-            $status = $e->getCode();
+            $status = $this->getHttpStatusCode($e);
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
@@ -247,7 +255,7 @@ abstract class CoreApiController
             DB::commit(); //Commit to Data Base
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
-            $status = $e->getCode();
+            $status = $this->getHttpStatusCode($e);
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
@@ -277,7 +285,7 @@ abstract class CoreApiController
             DB::commit(); //Commit to DataBase
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
-            $status = $e->getCode();
+            $status = $this->getHttpStatusCode($e);
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
@@ -303,7 +311,7 @@ abstract class CoreApiController
             //Response
             $response = ['data' => $dashboardData];
         } catch (\Exception $e) {
-            $status = $e->getCode();
+            $status = $this->getHttpStatusCode($e);
             $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
         }
 
