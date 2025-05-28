@@ -38,6 +38,26 @@ Route::prefix('/iuser/v1')->group(function () {
       //  ]
       // ]
     ]);
+
+    /**
+     * Authentication routes
+     */
+    Route::prefix('/auth')->group(function () {
+        $locale = \LaravelLocalization::setLocale() ?: \App::getLocale();
+
+        //Login
+        Route::post('/login', [Modules\Iuser\Http\Controllers\Api\AuthApiController::class, 'login'])
+            ->name($locale.'api.iuser.auth.login');
+
+        //Logout
+        Route::post('/logout', [Modules\Iuser\Http\Controllers\Api\AuthApiController::class, 'logout'])
+            ->name($locale.'api.iuser.auth.logout')
+            ->middleware('auth:api');
+
+
+    });
+
+
 // append
 
 });

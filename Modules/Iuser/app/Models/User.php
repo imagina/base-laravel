@@ -9,10 +9,13 @@ use Illuminate\Notifications\Notifiable;
 use Imagina\Icore\Traits\hasEventsWithBindings;
 use Imagina\Icore\Traits\HasOptionalTraits;
 
-class User extends Authenticatable
+use Laravel\Passport\HasApiTokens;
+use Laravel\Passport\Contracts\OAuthenticatable;
+
+class User extends Authenticatable implements OAuthenticatable
 {
 
-    use HasFactory, Notifiable, HasOptionalTraits, hasEventsWithBindings;
+    use HasApiTokens, HasFactory, Notifiable, HasOptionalTraits, hasEventsWithBindings;
 
     protected $table = 'iuser__users';
     public $transformer = 'Modules\Iuser\Transformers\UserTransformer';
