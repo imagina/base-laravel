@@ -1,6 +1,6 @@
 <?php
 
-namespace Modules\User\Permissions;
+namespace Modules\Iuser\Support\Permissions;
 
 use Modules\User\Repositories\RoleRepository;
 
