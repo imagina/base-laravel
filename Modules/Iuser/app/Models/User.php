@@ -6,12 +6,13 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
-use Imagina\Icore\Models\CoreModel;
+use Imagina\Icore\Traits\hasEventsWithBindings;
+use Imagina\Icore\Traits\HasOptionalTraits;
 
-class User extends CoreModel
+class User extends Authenticatable
 {
 
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasOptionalTraits, hasEventsWithBindings;
 
     protected $table = 'iuser__users';
     public $transformer = 'Modules\Iuser\Transformers\UserTransformer';
@@ -62,5 +63,12 @@ class User extends CoreModel
             'password' => 'hashed',
         ];
     }
+
+    public function roles()
+    {
+        return $this->belongsToMany(Role::class,'iuser__role_user');
+    }
+
+
 
 }

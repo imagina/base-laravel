@@ -10,14 +10,14 @@ class UserTransformer extends CoreResource
    * Attribute to exclude relations from transformed data
    * @var array
    */
-  protected $excludeRelations = [];
+  protected array $excludeRelations = [];
 
   /**
   * Method to merge values with response
   *
   * @return array
   */
-  public function modelAttributes($request)
+  public function modelAttributes($request):array
   {
     return [];
   }
