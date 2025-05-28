@@ -39,6 +39,15 @@ abstract class CoreApiController
         return in_array($code, $validCodes) ? $code : 500;
     }
 
+    public function getErrorMessage(\Exception $e): string
+    {
+        if (env('APP_DEBUG') == true) {
+            return $e->getMessage()."\n".$e->getFile()."\n".$e->getLine().$e->getTraceAsString();
+        } else {
+            return $e->getMessage();
+        }
+    }
+
     protected function validateWithModelRules(Request $request, string $action): void
     {
         $class = $this->model->requestValidation[$action] ?? null;
@@ -94,7 +103,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
         }
         //Return response
         return response()->json($response, $status ?? 200);
@@ -121,7 +130,7 @@ abstract class CoreApiController
             if ($params->page) $response['meta'] = ['page' => $this->pageTransformer($models)];
         } catch (\Exception $e) {
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
         }
 
         //Return response
@@ -151,7 +160,7 @@ abstract class CoreApiController
             $response = ['data' => CoreResource::transformData($model)];
         } catch (\Exception $e) {
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
         }
 
         //Return response
@@ -191,7 +200,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
         }
 
         //Return response
@@ -225,7 +234,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
         }
 
         //Return response
@@ -256,7 +265,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
         }
 
         //Return response
@@ -286,7 +295,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
         }
 
         //Return response
@@ -312,7 +321,7 @@ abstract class CoreApiController
             $response = ['data' => $dashboardData];
         } catch (\Exception $e) {
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $e->getMessage(), 'type' => 'error']]];
+            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
         }
 
         //Return response
