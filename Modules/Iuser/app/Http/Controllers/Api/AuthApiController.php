@@ -58,8 +58,8 @@ class AuthApiController extends CoreApiController
             ]];
 
         } catch (\Exception $e) {
-            $status = $this->getStatusError($e->getCode());
-            $response = ['errors' => $this->getErrorMessage($e)];
+            $status = $this->getHttpStatusCode($e);
+            $response = $this->getErrorResponse($e);
         }
 
         //Return response
@@ -82,8 +82,8 @@ class AuthApiController extends CoreApiController
             $response = ['data' => 'Logout successful'];
 
         } catch (\Exception $e) {
-            $status = $this->getStatusError($e->getCode());
-            $response = ['errors' => $this->getErrorMessage($e)];
+            $status = $this->getHttpStatusCode($e);
+            $response = $this->getErrorResponse($e);
         }
 
         //Return response
