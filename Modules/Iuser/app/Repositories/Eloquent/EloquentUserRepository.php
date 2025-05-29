@@ -3,7 +3,7 @@
 namespace Modules\Iuser\Repositories\Eloquent;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
 use Modules\Iuser\Repositories\UserRepository;
 use Imagina\Icore\Repositories\Eloquent\EloquentCoreRepository;
 

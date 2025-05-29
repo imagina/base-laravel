@@ -5,6 +5,7 @@ namespace Imagina\Icore\Repositories\Eloquent;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Imagina\Icore\Repositories\CoreRepository;
 use Imagina\Icore\Transformers\CoreResource;
@@ -87,7 +88,7 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
      * @param callable|null $method
      * @return Builder
      */
-    public function includeToQuery(Builder $query, object $params, ?callable $method = null): Builder
+    public function includeToQuery(Builder $query, object $params, ?string $method = null): Builder
     {
         $relations = $params->include ?? [];
         $withoutDefaultInclude = $params->filter?->withoutDefaultInclude ?? false;
@@ -121,12 +122,12 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
 
     /**
      * @param Builder $query
-     * @param object $order
+     * @param object|null $order
      * @param bool $noSortOrder
-     * @param string $orderByRaw
+     * @param string|null $orderByRaw
      * @return Builder
      */
-    public function orderQuery(Builder $query, object $order, bool $noSortOrder, string $orderByRaw): Builder
+    public function orderQuery(Builder $query, object|null $order, bool $noSortOrder, string|null $orderByRaw): Builder
     {
         // Use raw order if provided, stripping any potential HTML tags
         if (!empty($orderByRaw)) {
@@ -353,12 +354,13 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
      * @param object|null $params
      * @return Collection|Builder
      */
-    public function getItemsBy(?object $params = null): Collection|Builder
+    public function getItemsBy(?object $params = null): Collection|Builder|LengthAwarePaginator
     {
         $params = $params ?? (object)[];
-        $filters = $params->filter ?? (object)[];
+        $filters = (object)($params->filter ?? []);
         $differentParameters = $this->compareParameters($params);
         $this->params = $params;
+
         // Reuse the query if already exist
         if (empty($this->query) || $differentParameters) {
             $query = $this->model->query();
@@ -366,7 +368,7 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
             $query = $this->applyFiltersToQuery($query, $filters, $params);
             $query = $this->orderQuery(
                 $query,
-                $params->order ?? true,
+                $params->order,
                 $filters->noSortOrder ?? false,
                 $params->orderByRaw ?? null
             );
@@ -418,9 +420,8 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
             if (!empty($translatableFields)) {
                 $query->whereHas('translations', function ($q) use ($locale, $criteria, $translatableFields) {
                     $q->where('locale', $locale)->where(function ($subQ) use ($criteria, $translatableFields) {
-                        //TODO: Does it working with reduce?
                         collect($translatableFields)->reduce(function ($carry, $field) use ($subQ, $criteria) {
-                            return $subQ->orWhere($field, $criteria);
+                            return $subQ->orWhere(camelToSnake($field), $criteria);
                         });
                     });
                 });
@@ -429,9 +430,8 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
             if (!empty($modelFields)) {
                 $table = $this->model->getTable();
                 $query->where(function ($q) use ($modelFields, $criteria, $table) {
-                    //TODO: Does it working with reduce?
                     collect($modelFields)->reduce(function ($carry, $field) use ($q, $criteria, $table) {
-                        return $q->orWhere("{$table}.{$field}", $criteria);
+                        return $q->orWhere("{$table}.".camelToSnake($field), $criteria);
                     });
                 });
             }
@@ -443,7 +443,6 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
         }
 
         if (!empty($params->returnAsQuery)) return $query;
-
         $response = $query->first();
 
         $this->dispatchesEvents([
@@ -464,10 +463,11 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
         $modelRelations = $this->getModelRelations();
         $modelFillable = array_merge($this->model->getFillable(), ['id', 'created_at', 'updated_at', 'created_by', 'updated_by']);
         $translatableAttributes = $this->model->translatedAttributes ?? [];
+        $filtersToApply = array_diff(array_keys((array)$filters), $this->replaceFilters);
 
-        foreach ($filters as $filterName => $filterValue) {
+        foreach ($filtersToApply as $filterName) {
             $filterNameSnake = camelToSnake($filterName);
-            if (array_key_exists($filterName, $this->replaceFilters)) continue;
+            $filterValue = $filters->$filterName;
 
             if (array_key_exists($filterNameSnake, $modelFillable)) {
                 if ($filterNameSnake == "id") $filterValue = (object)["where" => 'in', "value" => (array)$filterValue];
@@ -492,12 +492,12 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
             }
         }
 
-        if (!empty($filters->date)) {
-            $date = $filters->date;
-            $field = $date->field ?? 'created_at';
-            if (!empty($date->from)) $query->whereDate($field, '>=', $date->from);
-            if (!empty($date->to)) $query->whereDate($field, '<=', $date->to);
-        }
+//        if (!empty($filters->date)) {
+//            $date = $filters->date;
+//            $field = $date->field ?? 'created_at';
+//            if (!empty($date->from)) $query->whereDate($field, '>=', $date->from);
+//            if (!empty($date->to)) $query->whereDate($field, '<=', $date->to);
+//        }
 
         if (!empty($filters->withTrashed)) $query->withTrashed();
         if (!empty($filters->onlyTrashed)) $query->onlyTrashed();
@@ -511,7 +511,7 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
      * @param object $params
      * @return Collection
      */
-    public function getItemsByTransformed(Collection $models, object $params): Collection
+    public function getItemsByTransformed(Collection|LengthAwarePaginator $models, object $params): array
     {
         return json_decode(json_encode(CoreResource::transformData($models)));
     }

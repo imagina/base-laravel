@@ -5,6 +5,7 @@ namespace Imagina\Icore\Repositories;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 
 interface CoreRepository extends BaseRepository
 {
@@ -12,7 +13,7 @@ interface CoreRepository extends BaseRepository
      * @param object|null $params
      * @return Collection|Builder
      */
-    public function getItemsBy(?object $params): Collection|Builder;
+    public function getItemsBy(?object $params): Collection|Builder|LengthAwarePaginator;
 
     /**
      * @param string|int $criteria
@@ -81,7 +82,7 @@ interface CoreRepository extends BaseRepository
      * @param object $params
      * @return Collection
      */
-    public function getItemsByTransformed(Collection $models, object $params): Collection;
+    public function getItemsByTransformed(Collection $models, object $params): array;
 
     /**
      * @param object $params
