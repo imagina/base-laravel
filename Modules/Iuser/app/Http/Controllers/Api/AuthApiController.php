@@ -9,13 +9,17 @@ use Imagina\Icore\Http\Controllers\CoreApiController;
 
 use Modules\Iuser\Models\User;
 use Modules\Iuser\Repositories\UserRepository;
+use Modules\Iuser\Services\AuthService;
 
 class AuthApiController extends CoreApiController
 {
 
-    public function __construct(User $model, UserRepository $modelRepository)
+    protected $authService;
+
+    public function __construct(User $model, UserRepository $modelRepository,AuthService $authService)
     {
         parent::__construct($model, $modelRepository);
+        $this->authService = $authService;
     }
 
     /**
@@ -34,12 +38,19 @@ class AuthApiController extends CoreApiController
             if (!Auth::attempt($credentials))
                 throw new \Exception('Unauthorized', 401);
 
-            //Laravel 12 Documentacion |genero error: Session store not set on request.
-            //$request->session()->regenerate();
+            //TODO: Esta es una opcion , no se si sea necesaria
+            //El middleware web debe estar habilitado en la ruta del login API.
+            /* if (Auth::guard('web')->attempt($credentials)) {
+                $request->session()->regenerate();
+            } */
 
             //Authentication passed
             $user = auth()->user();
             $tokenResult = $user->createToken('authToken');
+
+            //TODO: No generó error pero habria que probar en frontend
+            //Session in Blade
+            $this->authService->logUserIn($user);
 
             $response = ['data' => [
                 'userData' => $user,
@@ -66,20 +77,8 @@ class AuthApiController extends CoreApiController
             $user = auth()->user();
             $user->token()->revoke(); //Revoke the token
 
-            //Laravel 12 Documentacion | genero error: Session store not set on request.
-            /*
-            Auth::logout();
-            $request->session()->invalidate();
-            $request->session()->regenerateToken();
-            */
-
-            // EJEMPLO ICMS
-            // El $this->auth que tienen es de este = use Modules\User\Contracts\Authentication;
-            /*
-            $token = $this->validateResponseApi($this->getRequestToken($request)); //Get Token
-            if ($token) DB::table('oauth_access_tokens')->where('id', $token->id)->delete(); //Delete Token
-            $this->auth->logout();
-            */
+            //Session in Blade
+            $this->authService->logUserOut($user);
 
             $response = ['data' => 'Logout successful'];
 
