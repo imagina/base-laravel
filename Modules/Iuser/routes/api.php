@@ -14,14 +14,15 @@ Route::prefix('/iuser/v1')->group(function () {
       'controller' => UserApiController::class,
       'permission' => 'iuser.users',
       //'middleware' => ['create' => [], 'index' => [], 'show' => [], 'update' => [], 'delete' => [], 'restore' => []],
-      // 'customRoutes' => [ // Include custom routes if needed
-      //  [
-      //    'method' => 'post', // get,post,put....
-      //    'path' => '/some-path', // Route Path
-      //    'uses' => 'ControllerMethodName', //Name of the controller method to use
-      //    'middleware' => [] // if not set up middleware, auth:api will be the default
-      //  ]
-      // ]
+      'customRoutes' => [ // Include custom routes if needed
+        [
+            'method' => 'post', // get,post,put....
+            'path' => '/register', // Route Path
+            'uses' => 'register', //Name of the controller method to use
+            'middleware' => [] // if not set up middleware, auth:api will be the default
+       ]
+      ]
+
     ]);
     Route::apiCrud([
       'module' => 'iuser',

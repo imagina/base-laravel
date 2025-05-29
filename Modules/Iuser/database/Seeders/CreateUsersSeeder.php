@@ -5,18 +5,16 @@ namespace Modules\Iuser\Database\Seeders;
 use Illuminate\Database\Seeder;
 use Illuminate\Database\Eloquent\Model;
 
-use Illuminate\Support\Facades\Hash;
-
-use Modules\Iuser\Repositories\UserRepository;
+use Modules\Iuser\Services\UserService;
 
 class CreateUsersSeeder extends Seeder
 {
 
-    private $userRepository;
+    private $userService;
 
-    public function __construct(UserRepository $userRepository)
+    public function __construct(UserService $userService)
     {
-        $this->userRepository = $userRepository;
+        $this->userService = $userService;
     }
 
     /**
@@ -33,27 +31,16 @@ class CreateUsersSeeder extends Seeder
     private function createSuperAdminUser(): void
     {
 
-        //TODO - Ver si se cambia de aqui, pasar al .env
-        $password = 'test';
-
         //Data Base
         $data = [
             'email' => 'soporte@imaginacolombia.com',
-            'password' => Hash::make($password),
+            'password' => 'baseImagina123', //TODO - Cambiar ubicacion
             'first_name' => 'Imagina',
-            'last_name' => 'Colombia'
+            'last_name' => 'Colombia',
+            'roles' => [1], //Super Admin role
         ];
 
-        //TODO
-        //Esto tocara extraerlo porque posiblemente Register o Create lo necesite
-        //Tambien sera mejor enviar el roleId como parametro
-
-        //Only the first time
-        $user = $this->userRepository->getItem(['email' => $data['email']]);
-        if (!$user) {
-            $user = $this->userRepository->create($data);
-            $user->roles()->attach(1); // Assuming 1 is the ID for the Super Admin role
-        }
+        $user = $this->userService->createUser($data);
 
     }
 
