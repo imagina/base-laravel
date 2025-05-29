@@ -53,14 +53,14 @@ abstract class CoreApiController
         $class = $this->model->requestValidation[$action] ?? null;
 
         if ($class && class_exists($class)) {
+            $rules = new $class($data);
             /** @var \Illuminate\Foundation\Http\FormRequest $formRequest */
-            $formRequest = app($class);
-
-            // Pull rules and custom messages (if available)
-            $rules = $formRequest->rules();
-            $messages = method_exists($formRequest, 'messages') ? $formRequest->messages() : [];
-
-            $validator = Validator::make($data, $rules, $messages);
+            $rules->setContainer(app());
+            if (method_exists($rules, 'getValidator')) {
+                $validator = $rules->getValidator();
+            } else {
+                $validator = Validator::make($rules->all(), $rules->rules(), $rules->messages());
+            }
 
             if ($validator->fails()) {
                 throw new ValidationException($validator);
