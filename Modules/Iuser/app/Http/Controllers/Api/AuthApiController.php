@@ -2,7 +2,6 @@
 
 namespace Modules\Iuser\Http\Controllers\Api;
 
-use Illuminate\Routing\Controller;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Imagina\Icore\Http\Controllers\CoreApiController;
