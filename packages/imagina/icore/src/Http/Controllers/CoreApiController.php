@@ -48,7 +48,7 @@ abstract class CoreApiController
         ];
     }
 
-    protected function validateWithModelRules(Request $request, string $action): void
+    protected function validateWithModelRules(array $data, string $action): void
     {
         $class = $this->model->requestValidation[$action] ?? null;
 
@@ -60,7 +60,7 @@ abstract class CoreApiController
             $rules = $formRequest->rules();
             $messages = method_exists($formRequest, 'messages') ? $formRequest->messages() : [];
 
-            $validator = Validator::make($request->all(), $rules, $messages);
+            $validator = Validator::make($data, $rules, $messages);
 
             if ($validator->fails()) {
                 throw new ValidationException($validator);
