@@ -39,7 +39,7 @@ abstract class CoreApiController
         return in_array($code, $validCodes) ? $code : 500;
     }
 
-    public function getErrorResponse(\Exception $e): string
+    public function getErrorResponse(\Exception $e): array
     {
         return [
             'messages' => [['message' => $e->getMessage(), 'type' => 'error']],
