@@ -50,6 +50,7 @@ abstract class CoreApiController
 
     protected function validateWithModelRules(array $data, string $action): void
     {
+        //TODO: Validate translatable rules
         $class = $this->model->requestValidation[$action] ?? null;
 
         if ($class && class_exists($class)) {
