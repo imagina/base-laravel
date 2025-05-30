@@ -13,7 +13,7 @@ interface CoreRepository extends BaseRepository
      * @param object|null $params
      * @return Collection|Builder
      */
-    public function getItemsBy(?object $params): Collection|Builder|LengthAwarePaginator;
+    public function getItemsBy(?object $params, ?Builder $query = null): Collection|Builder|LengthAwarePaginator;
 
     /**
      * @param string|int $criteria
@@ -76,20 +76,6 @@ interface CoreRepository extends BaseRepository
      * @return Model
      */
     public function updateOrCreate(array $validation, array $data): Model;
-
-    /**
-     * @param Collection $models
-     * @param object $params
-     * @return Collection
-     */
-    public function getItemsByTransformed(Collection $models, object $params): array;
-
-    /**
-     * @param object $params
-     * @param string|int|null $criteria
-     * @return Builder
-     */
-    public function getOrCreateQuery(object $params, string|int|null $criteria = null): Builder;
 
     /**
      * @param object|null $params

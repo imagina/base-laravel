@@ -47,10 +47,4 @@ interface BaseRepository
      * @return bool
      */
     public function destroy(Model $model): bool;
-
-    /**
-     * @param array $tags
-     * @return bool
-     */
-    public function clearCache(array $extraTags = []): bool;
 }

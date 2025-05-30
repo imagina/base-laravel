@@ -4,11 +4,13 @@ namespace Imagina\Icore\Support;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
+use Carbon\Carbon;
 
 class FilterQueryBuilder
 {
     public static function apply(Builder $query, object $filterData, string|array $fieldName, ?Model $model = null): Builder
     {
+        $filterData = self::normalizeFilterValue($fieldName, $filterData);
         $filterWhere = $filterData->where ?? null;
         $filterOperator = $filterData->operator ?? '=';
         $filterValue = $filterData->value ?? $filterData;
@@ -31,6 +33,29 @@ class FilterQueryBuilder
             'hasMany' => self::applyHasMany($query, $fieldName, $filterValue),
             default => $query->where($fieldName, $filterOperator, $filterValue),
         };
+    }
+
+    protected static function normalizeFilterValue(string $field, mixed $value): object|array
+    {
+        if ($field === 'id') {
+            return (object)['where' => 'in', 'value' => (array)$value];
+        }
+
+        if ($field === 'parent_id' && !$value) {
+            return (object)['where' => 'null'];
+        }
+
+        if ($value->type === 'date') {
+            $start = Carbon::parse($value->from)->startOfDay(); // 2021-06-01 00:00:00
+            $end = Carbon::parse($value->to)->endOfDay();     // 2021-06-01 23:59:59
+            return (object)['where' => 'between', 'value' => [$start, $end]];
+        }
+
+        if (is_array($value) && !isset($value['where'])) {
+            return (object)['where' => 'in', 'value' => $value];
+        }
+
+        return $value;
     }
 
     protected static function applyBelongsToMany(Builder $query, array $fieldName, array $filterValue, ?Model $model): Builder

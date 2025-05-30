@@ -15,22 +15,11 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      */
     public function getItemsBy(?object $params = null): Collection
     {
-        $query = $this->repository->getOrCreateQuery($params);
-        return $this->remember(function () use ($params) {
-            return $this->repository->getItemsBy($params);
-        }, $this->makeCacheKey(null, $query, $params));
-    }
-
-    /**
-     * @param string|int $criteria
-     * @param object|null $params
-     * @return Model|null
-     */
-    public function getItem(string|int $criteria, ?object $params = null): ?Model
-    {
-        $query = $this->repository->getOrCreateQuery($params, $criteria);
-        return $this->remember(function () use ($criteria, $params) {
-            return $this->repository->getItem($criteria, $params);
+        $params = clone($params ?? (object)[]);
+        $params->returnAsQuery = true;
+        $query = $this->repository->getItemsBy($params);
+        return $this->remember(function () use ($params, $query) {
+            return $this->repository->getItemsBy($params, $query);
         }, $this->makeCacheKey(null, $query, $params));
     }
 
@@ -41,10 +30,27 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      */
     public function getItemsByTransformed(Collection $models, object $params): Collection
     {
+        $params = clone($params ?? (object)[]);
+        $params->returnAsQuery = true;
         $params->transformed = true;
         $query = $this->repository->getOrCreateQuery($params);
         return $this->remember(function () use ($models, $params) {
             return $this->repository->getItemsByTransformed($models, $params);
+        }, $this->makeCacheKey(null, $query, $params));
+    }
+
+    /**
+     * @param string|int $criteria
+     * @param object|null $params
+     * @return Model|null
+     */
+    public function getItem(string|int $criteria, ?object $params = null): ?Model
+    {
+        $params = clone($params ?? (object)[]);
+        $params->returnAsQuery = true;
+        $query = $this->repository->getOrCreateQuery($params, $criteria);
+        return $this->remember(function () use ($criteria, $params) {
+            return $this->repository->getItem($criteria, $params);
         }, $this->makeCacheKey(null, $query, $params));
     }
 
@@ -141,19 +147,9 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      * @param array $data
      * @return Model
      */
-    public function updateOrCreate(array $validationData, array $data): Model
+    public function updateOrCreate(array $validation, array $data): Model
     {
         $this->clearCache();
         return $this->repository->updateOrCreate($validationData, $data);
-    }
-
-    /**
-     * @param object $params
-     * @param string|int|null $criteria
-     * @return Builder
-     */
-    public function getOrCreateQuery(object $params, string|int|null $criteria = null): Builder
-    {
-        return $this->repository->getOrCreateQuery($params, $criteria);
     }
 }
