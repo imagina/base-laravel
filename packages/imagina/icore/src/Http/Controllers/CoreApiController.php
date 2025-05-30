@@ -39,28 +39,29 @@ abstract class CoreApiController
         return in_array($code, $validCodes) ? $code : 500;
     }
 
-    public function getErrorMessage(\Exception $e): string
+    public function getErrorResponse(\Exception $e): array
     {
-        if (env('APP_DEBUG') == true) {
-            return $e->getMessage()."\n".$e->getFile()."\n".$e->getLine().$e->getTraceAsString();
-        } else {
-            return $e->getMessage();
-        }
+        return [
+            'messages' => [['message' => $e->getMessage(), 'type' => 'error']],
+            'file' => $e->getFile(),
+            'line' => $e->getLine()
+        ];
     }
 
-    protected function validateWithModelRules(Request $request, string $action): void
+    protected function validateWithModelRules(array $data, string $action): void
     {
+        //TODO: Validate translatable rules
         $class = $this->model->requestValidation[$action] ?? null;
 
         if ($class && class_exists($class)) {
+            $rules = new $class($data);
             /** @var \Illuminate\Foundation\Http\FormRequest $formRequest */
-            $formRequest = app($class);
-
-            // Pull rules and custom messages (if available)
-            $rules = $formRequest->rules();
-            $messages = method_exists($formRequest, 'messages') ? $formRequest->messages() : [];
-
-            $validator = Validator::make($request->all(), $rules, $messages);
+            $rules->setContainer(app());
+            if (method_exists($rules, 'getValidator')) {
+                $validator = $rules->getValidator();
+            } else {
+                $validator = Validator::make($rules->all(), $rules->rules(), $rules->messages());
+            }
 
             if ($validator->fails()) {
                 throw new ValidationException($validator);
@@ -92,7 +93,7 @@ abstract class CoreApiController
             $modelData = $request->input('attributes') ?? [];
 
             //Validate Request
-            $this->validateWithModelRules($request, 'create');
+            $this->validateWithModelRules($modelData, 'create');
 
             //Create model
             $model = $this->modelRepository->create($modelData);
@@ -103,7 +104,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
+            $response = $this->getErrorResponse($e);
         }
         //Return response
         return response()->json($response, $status ?? 200);
@@ -130,7 +131,7 @@ abstract class CoreApiController
             if ($params->page) $response['meta'] = ['page' => $this->pageTransformer($models)];
         } catch (\Exception $e) {
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
+            $response = $this->getErrorResponse($e);
         }
 
         //Return response
@@ -160,7 +161,7 @@ abstract class CoreApiController
             $response = ['data' => CoreResource::transformData($model)];
         } catch (\Exception $e) {
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
+            $response = $this->getErrorResponse($e);
         }
 
         //Return response
@@ -186,7 +187,7 @@ abstract class CoreApiController
             $modelData[$field] = $criteria;
 
             //Validate Request
-            $this->validateWithModelRules($request, 'update');
+            $this->validateWithModelRules($modelData, 'update');
 
             //Update model
             $model = $this->modelRepository->updateBy($criteria, $modelData, $params);
@@ -200,7 +201,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
+            $response = $this->getErrorResponse($e);
         }
 
         //Return response
@@ -223,7 +224,7 @@ abstract class CoreApiController
             $modelData = $request->input('attributes') ?? [];
 
             //Validate Request
-            $this->validateWithModelRules($request, 'delete');
+            $this->validateWithModelRules($modelData, 'delete');
 
             //Delete model
             $this->modelRepository->deleteBy($criteria, $params);
@@ -234,7 +235,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
+            $response = $this->getErrorResponse($e);
         }
 
         //Return response
@@ -265,7 +266,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
+            $response = $this->getErrorResponse($e);
         }
 
         //Return response
@@ -295,7 +296,7 @@ abstract class CoreApiController
         } catch (\Exception $e) {
             DB::rollback(); //Rollback to Data Base
             $status = $this->getHttpStatusCode($e);
-            $response = ['messages' => [['message' => $this->getErrorMessage($e), 'type' => 'error']]];
+            $response = $this->getErrorResponse($e);
         }
 
         //Return response

@@ -4,21 +4,18 @@ namespace Modules\Iuser\Http\Requests;
 
 use Imagina\Icore\Http\Request\CoreFormRequest;
 
-class CreateRoleRequest extends CoreFormRequest
+class ResetPasswordUserRequest extends CoreFormRequest
 {
     public function rules()
     {
         return [
-            'name' => 'required',
-            'slug' => 'required|unique:iuser__roles,slug'
+            'email' => 'required|email'
         ];
     }
 
     public function translationRules()
     {
-        return [
-            'title' => 'required'
-        ];
+        return [];
     }
 
     public function authorize()

@@ -9,10 +9,16 @@ use Illuminate\Notifications\Notifiable;
 use Imagina\Icore\Traits\hasEventsWithBindings;
 use Imagina\Icore\Traits\HasOptionalTraits;
 
-class User extends Authenticatable
+use Laravel\Passport\HasApiTokens;
+use Laravel\Passport\Contracts\OAuthenticatable;
+
+//use App\Notifications\ResetPasswordNotification;
+
+
+class User extends Authenticatable implements OAuthenticatable
 {
 
-    use HasFactory, Notifiable, HasOptionalTraits, hasEventsWithBindings;
+    use HasApiTokens, HasFactory, Notifiable, HasOptionalTraits, hasEventsWithBindings;
 
     protected $table = 'iuser__users';
     public $transformer = 'Modules\Iuser\Transformers\UserTransformer';
@@ -20,6 +26,9 @@ class User extends Authenticatable
     public $requestValidation = [
         'create' => 'Modules\Iuser\Http\Requests\CreateUserRequest',
         'update' => 'Modules\Iuser\Http\Requests\UpdateUserRequest',
+        'login' => 'Modules\Iuser\Http\Requests\LoginUserRequest',
+        'resetPassword' => 'Modules\Iuser\Http\Requests\ResetPasswordUserRequest',
+        'resetPasswordComplete' => 'Modules\Iuser\Http\Requests\ResetPasswordCompleteUserRequest',
     ];
     //Instance external/internal events to dispatch with extraData
     public $dispatchesEventsWithBindings = [
@@ -39,6 +48,10 @@ class User extends Authenticatable
         'first_name',
         'last_name',
         'is_guest'
+    ];
+
+    public $modelRelations = [
+        'roles' => 'belongsToMany'
     ];
 
     /**
@@ -64,11 +77,26 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * RELATIONS
+     */
     public function roles()
     {
-        return $this->belongsToMany(Role::class,'iuser__role_user');
+        return $this->belongsToMany(Role::class,'iuser__role_user')->withTimestamps();
     }
 
+
+    /**
+     * Send a password reset notification to the user.
+     */
+    public function sendPasswordResetNotification($token): void
+    {
+
+        $url = env('APP_URL') . "/reset-password?token=" . $token;
+        \Log::info("Iuser::User||Token: " . $token);
+
+        //$this->notify(new ResetPasswordNotification($url));
+    }
 
 
 }

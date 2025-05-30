@@ -71,7 +71,21 @@ class EloquentUserRepository extends EloquentCoreRepository implements UserRepos
          *
          */
 
-        //Response
-        return $model;
-    }
+    //Response
+    return $model;
+  }
+
+  /**
+   * Method to replace Model Relations
+   *
+   * @param $model ,$data
+   * @return $model
+   */
+  public function beforeCreate(&$data)
+  {
+    //Validation Data
+    $data['email'] = strtolower($data['email']);
+    $data['password'] = \Hash::make($data['password']);
+  }
+
 }
