@@ -31,7 +31,6 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      */
     public function getItemsByTransformed(Collection|LengthAwarePaginator $models, object $params): array
     {
-        $this->clearCache();
         $queryParams = clone($params ?? (object)[]);
         $queryParams->returnAsQuery = true;
         $queryParams->transformed = true;
