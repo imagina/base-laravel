@@ -20,7 +20,7 @@ interface CoreRepository extends BaseRepository
      * @param object|null $params
      * @return Model|Builder|null
      */
-    public function getItem(string|int $criteria, ?object $params): Model|Builder|null;
+    public function getItem(string|int $criteria, ?object $params, ?Builder $query = null): Model|Builder|null;
 
     /**
      * @param array $data

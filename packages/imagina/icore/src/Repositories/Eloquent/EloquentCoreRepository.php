@@ -45,10 +45,9 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
                 $filters->noSortOrder ?? false,
                 $params->orderByRaw ?? null
             );
+            //Response as query
+            if (isset($params->returnAsQuery) && $params->returnAsQuery) return $query;
         }
-
-        //Response as query
-        if (isset($params->returnAsQuery) && $params->returnAsQuery) return $query;
 
         //Get response
         $response = !empty($params->page)
@@ -116,9 +115,8 @@ abstract class EloquentCoreRepository extends EloquentBaseRepository implements 
             }
 
             $query = $this->applyFiltersToQuery($query, $filters, $params);
+            if (!empty($params->returnAsQuery)) return $query;
         }
-
-        if (!empty($params->returnAsQuery)) return $query;
 
         $response = $query->first();
         $this->dispatchesEvents([

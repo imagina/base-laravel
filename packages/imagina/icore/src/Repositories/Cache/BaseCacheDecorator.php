@@ -98,10 +98,9 @@ abstract class BaseCacheDecorator implements BaseRepository
      */
     public function clearCache(array $extraTags = []): bool
     {
-        if (!method_exists($this->cache->getStore(), 'tags')) return false;
-        $store = $this->cache;
+        if (config('cache.default') != 'redis') return false;
         $tags = array_unique(array_filter(array_merge(($this->tags ?? []), [$this->entityName], $extraTags)));
-        return $store->tags($tags)->flush();
+        return $this->cache->tags($tags)->flush();
     }
 
     /**

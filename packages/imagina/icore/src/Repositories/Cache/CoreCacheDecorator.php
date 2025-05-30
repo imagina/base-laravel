@@ -4,7 +4,8 @@ namespace Imagina\Icore\Repositories\Cache;
 
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Query\Builder;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Imagina\Icore\Repositories\BaseRepository;
 
 abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepository
@@ -13,14 +14,14 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      * @param object|null $params
      * @return Collection
      */
-    public function getItemsBy(?object $params = null): Collection
+    public function getItemsBy(?object $params = null, ?Builder $query = null): Collection|Builder|LengthAwarePaginator
     {
-        $params = clone($params ?? (object)[]);
-        $params->returnAsQuery = true;
-        $query = $this->repository->getItemsBy($params);
+        $queryParams = clone($params ?? (object)[]);
+        $queryParams->returnAsQuery = true;
+        $query = $this->repository->getItemsBy($queryParams);
         return $this->remember(function () use ($params, $query) {
             return $this->repository->getItemsBy($params, $query);
-        }, $this->makeCacheKey(null, $query, $params));
+        }, $this->makeCacheKey(null, $query, $queryParams));
     }
 
     /**
@@ -28,15 +29,16 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      * @param object $params
      * @return Collection
      */
-    public function getItemsByTransformed(Collection $models, object $params): Collection
+    public function getItemsByTransformed(Collection|LengthAwarePaginator $models, object $params): array
     {
-        $params = clone($params ?? (object)[]);
-        $params->returnAsQuery = true;
-        $params->transformed = true;
-        $query = $this->repository->getOrCreateQuery($params);
+        $this->clearCache();
+        $queryParams = clone($params ?? (object)[]);
+        $queryParams->returnAsQuery = true;
+        $queryParams->transformed = true;
+        $query = $this->repository->getItemsBy($queryParams);
         return $this->remember(function () use ($models, $params) {
-            return $this->repository->getItemsByTransformed($models, $params);
-        }, $this->makeCacheKey(null, $query, $params));
+            return $this->repository->getItemsByTransformed($models);
+        }, $this->makeCacheKey(null, $query, $queryParams));
     }
 
     /**
@@ -44,14 +46,14 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      * @param object|null $params
      * @return Model|null
      */
-    public function getItem(string|int $criteria, ?object $params = null): ?Model
+    public function getItem(string|int $criteria, ?object $params = null, ?Builder $query = null): ?Model
     {
-        $params = clone($params ?? (object)[]);
-        $params->returnAsQuery = true;
-        $query = $this->repository->getOrCreateQuery($params, $criteria);
+        $queryParams = clone($params ?? (object)[]);
+        $queryParams->returnAsQuery = true;
+        $query = $this->repository->getItem($criteria, $queryParams);
         return $this->remember(function () use ($criteria, $params) {
             return $this->repository->getItem($criteria, $params);
-        }, $this->makeCacheKey(null, $query, $params));
+        }, $this->makeCacheKey(null, $query, $queryParams));
     }
 
     /**
@@ -114,7 +116,7 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      * @param object|null $params
      * @return Collection
      */
-    public function bulkUpdate(array $data, ?object $params = null): Collection
+    public function bulkUpdate(array $data, ?object $params = null): array
     {
         $this->clearCache();
         return $this->repository->bulkUpdate($data, $params);
@@ -124,7 +126,7 @@ abstract class CoreCacheDecorator extends BaseCacheDecorator implements BaseRepo
      * @param array $data
      * @return Collection
      */
-    public function bulkCreate(array $data): Collection
+    public function bulkCreate(array $data): array
     {
         $this->clearCache();
         return $this->repository->bulkCreate($data);
