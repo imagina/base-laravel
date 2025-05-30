@@ -44,6 +44,10 @@ class User extends Authenticatable implements OAuthenticatable
         'is_guest'
     ];
 
+    public $modelRelations = [
+        'roles' => 'belongsToMany'
+    ];
+
     /**
      * The attributes that should be hidden for serialization.
      *
@@ -69,7 +73,7 @@ class User extends Authenticatable implements OAuthenticatable
 
     public function roles()
     {
-        return $this->belongsToMany(Role::class,'iuser__role_user');
+        return $this->belongsToMany(Role::class,'iuser__role_user')->withTimestamps();
     }
 
 

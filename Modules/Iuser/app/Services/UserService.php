@@ -38,17 +38,13 @@ class UserService
             'first_name' => $data['first_name'] ?? '',
             'last_name' => $data['last_name'] ?? '',
             'email' => strtolower($data['email']),
-            'password' =>  $data['password'] //Hash::make($data['password'])
+            'password' =>  $data['password'], //Hash::make($data['password'])
+            'roles' => isset($data['roles']) ? $data['roles'] : [2], //Default role is 2 (user)
         ];
 
         $user = $this->userRepository->create($dataToCreate);
 
-        //Validation Roles
-        if(isset($data['roles']) && is_array($data['roles'])) {
-            $user->roles()->sync($data['roles']); // Sync roles if provided
-        } else {
-            $user->roles()->attach(2); // Default role is USER, ID 2
-        }
+
 
         return $user;
 

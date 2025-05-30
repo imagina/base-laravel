@@ -12,7 +12,8 @@ class CreateUserRequest extends CoreFormRequest
         return [
             'email' => ['required', 'email',new UniqueRule('iuser__users', null, null, trans('iuser::users.messages.unavailableUserName'))],
             'password' => 'required|confirmed|min:6',
-            'password_confirmation' => 'required'
+            'password_confirmation' => 'required',
+            'roles' => 'required|array'
         ];
     }
 

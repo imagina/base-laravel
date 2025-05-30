@@ -47,7 +47,7 @@ class UserApiController extends CoreApiController
                 //Validate data
                 $this->validateWithModelRules($data, 'create');
                 //Create user
-                $user = $this->userService->createUser($data, false); //False to skip user existence check
+                $user = $this->modelRepository->create($data);
                 //Set response
                 $response = [
                     'data' => "User registered successfully"
