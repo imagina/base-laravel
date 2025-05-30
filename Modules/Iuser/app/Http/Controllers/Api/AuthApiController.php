@@ -10,6 +10,8 @@ use Modules\Iuser\Models\User;
 use Modules\Iuser\Repositories\UserRepository;
 use Modules\Iuser\Services\AuthService;
 
+use Illuminate\Support\Facades\Password;
+
 class AuthApiController extends CoreApiController
 {
 
@@ -28,13 +30,12 @@ class AuthApiController extends CoreApiController
     {
         try {
 
-            $credentials = $request->validate([
-                'email' => ['required', 'email'],
-                'password' => ['required'],
-            ]);
+            //Validate request
+            $data = $request->input('attributes') ?? [];
+            $this->validateWithModelRules($data, 'login');
 
             //Validations Credentials and Login
-            if (!Auth::attempt($credentials))
+            if (!Auth::attempt($data))
                 throw new \Exception('Unauthorized', 401);
 
             //TODO: Esta es una opcion , no se si sea necesaria
@@ -82,6 +83,83 @@ class AuthApiController extends CoreApiController
             $response = ['data' => 'Logout successful'];
 
         } catch (\Exception $e) {
+            $status = $this->getHttpStatusCode($e);
+            $response = $this->getErrorResponse($e);
+        }
+
+        //Return response
+        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+    }
+
+    /**
+     * Reset Password
+     */
+    public function reset(Request $request)
+    {
+        try {
+
+            //Validate request
+            $data = $request->input('attributes') ?? [];
+            $this->validateWithModelRules($data, 'resetPassword');
+
+            //Process reset password
+            $result = Password::sendResetLink(['email'=>$data['email']]);
+
+            //TODO: Traducciones
+            if($result === Password::ResetLinkSent){
+                //status = passwords.sent
+                $message = "We have emailed your password reset link";
+            }else{
+                //status = passwords.throttled
+                $message = "Please wait before retrying";
+            }
+
+            $response = ['data' => $message];
+
+        } catch (\Exception $e) {
+            $status = $this->getHttpStatusCode($e);
+            $response = $this->getErrorResponse($e);
+        }
+
+        //Return response
+        return response()->json($response ?? ['data' => 'Request successful'], $status ?? 200);
+    }
+
+    /**
+     * Reset Password Complete
+     */
+    public function resetComplete(Request $request)
+    {
+        try {
+
+            //Validate request
+            $data = $request->input('attributes') ?? [];
+            $this->validateWithModelRules($data, 'resetPasswordComplete');
+
+            //Process reset password complete
+            $result = Password::reset(
+                $data,
+                function ($model, string $password) {
+                    $model->forceFill([
+                        'password' => \Hash::make($password)
+                    ])->setRememberToken(\Str::random(60));
+
+                    $model->save();
+                }
+            );
+
+            //TODO: Traducciones
+            if($result === Password::PasswordReset){
+                //status = passwords.reset
+                $message = "Password reset successfully.";
+            }else{
+                //status = passwords.token
+                $message = "Invalid information";
+            }
+
+            $response = ['data' => $message];
+
+         } catch (\Exception $e) {
             $status = $this->getHttpStatusCode($e);
             $response = $this->getErrorResponse($e);
         }

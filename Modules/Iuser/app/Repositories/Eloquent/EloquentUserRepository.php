@@ -86,7 +86,7 @@ class EloquentUserRepository extends EloquentCoreRepository implements UserRepos
   {
     //Validation Data
     $data['email'] = strtolower($data['email']);
-
+    $data['password'] = \Hash::make($data['password']);
   }
 
 }

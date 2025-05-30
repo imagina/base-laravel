@@ -55,6 +55,13 @@ Route::prefix('/iuser/v1')->group(function () {
             ->name($locale.'api.iuser.auth.logout')
             ->middleware('auth:api');
 
+        //Reset Process
+        Route::post('/reset', [Modules\Iuser\Http\Controllers\Api\AuthApiController::class, 'reset'])
+            ->name($locale.'api.iuser.auth.reset');
+        //'middleware' => ['captcha'], //TODO: Check if captcha is needed
+
+        Route::post('/reset-complete', [Modules\Iuser\Http\Controllers\Api\AuthApiController::class, 'resetComplete'])
+            ->name($locale.'api.iuser.auth.reset-complete');
 
     });
 
