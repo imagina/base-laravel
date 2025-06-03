@@ -141,7 +141,7 @@ class AuthApiController extends CoreApiController
                 $data,
                 function ($model, string $password) {
                     $model->forceFill([
-                        'password' => \Hash::make($password)
+                        'password' => $password
                     ])->setRememberToken(\Str::random(60));
 
                     $model->save();

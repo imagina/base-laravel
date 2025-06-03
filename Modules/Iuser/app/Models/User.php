@@ -14,6 +14,7 @@ use Laravel\Passport\Contracts\OAuthenticatable;
 
 //use App\Notifications\ResetPasswordNotification;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 
 class User extends Authenticatable implements OAuthenticatable
 {
@@ -75,6 +76,16 @@ class User extends Authenticatable implements OAuthenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
         ];
+    }
+
+    /**
+     * ATTRIBUTES
+     */
+    protected function email(): Attribute
+    {
+        return Attribute::make(
+            set: fn (string $value) => strtolower($value)
+        );
     }
 
     /**

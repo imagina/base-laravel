@@ -4,7 +4,7 @@ namespace Modules\Iuser\Http\Requests;
 
 use Imagina\Icore\Http\Request\CoreFormRequest;
 
-class ResetPasswordUserRequest extends CoreFormRequest
+class LoginUserRequest extends CoreFormRequest
 {
     public function rules()
     {
