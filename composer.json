@@ -13,6 +13,7 @@
         "imagina/icore": "dev-main",
         "imagina/iworkshop": "dev-main",
         "laravel/framework": "^12.0",
+        "laravel/octane": "^2.9",
         "laravel/passport": "^13.0",
         "laravel/tinker": "^2.10.1",
         "mcamara/laravel-localization": "^2.3",

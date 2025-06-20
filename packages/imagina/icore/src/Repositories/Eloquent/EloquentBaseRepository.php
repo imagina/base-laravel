@@ -3,7 +3,9 @@
 namespace Imagina\Icore\Repositories\Eloquent;
 
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Imagina\Icore\Repositories\BaseRepository;
 
 /**
@@ -14,209 +16,77 @@ abstract class EloquentBaseRepository implements BaseRepository
     /**
      * @var \Illuminate\Database\Eloquent\Model An instance of the Eloquent Model
      */
-    protected $model;
+    protected Model $model;
 
     /**
      * @param  Model  $model
      */
-    public function __construct($model)
+    public function __construct(Model $model)
     {
         $this->model = $model;
     }
 
     /**
-     * {@inheritdoc}
+     * @param int $id
+     * @return Model|null
      */
-    public function find($id)
+    public function find(int $id): ?Model
     {
         if (method_exists($this->model, 'translations')) {
             return $this->model->with('translations')->find($id);
         }
-
         return $this->model->find($id);
     }
 
     /**
-     * {@inheritdoc}
+     * @return Collection
      */
-    public function all()
+    public function all(): Collection
     {
         if (method_exists($this->model, 'translations')) {
             return $this->model->with('translations')->orderBy('created_at', 'DESC')->get();
         }
-
         return $this->model->orderBy('created_at', 'DESC')->get();
     }
 
     /**
-     * {@inheritdoc}
+     * @param int $perPage
+     * @return LengthAwarePaginator
      */
-    public function allWithBuilder(): Builder
-    {
-        if (method_exists($this->model, 'translations')) {
-            return $this->model->with('translations');
-        }
-
-        return $this->model->query();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function paginate($perPage = 15)
+    public function paginate(int $perPage = 15): LengthAwarePaginator
     {
         if (method_exists($this->model, 'translations')) {
             return $this->model->with('translations')->orderBy('created_at', 'DESC')->paginate($perPage);
         }
-
         return $this->model->orderBy('created_at', 'DESC')->paginate($perPage);
     }
 
     /**
-     * {@inheritdoc}
+     * @param array $data
+     * @return Model
      */
-    public function create($data)
+    public function create(array $data): Model
     {
         return $this->model->create($data);
     }
 
     /**
-     * {@inheritdoc}
+     * @param Model $model
+     * @param array $data
+     * @return Model
      */
-    public function update($model, $data)
+    public function update(Model $model,  array $data): Model
     {
         $model->update($data);
-
         return $model;
     }
 
     /**
-     * {@inheritdoc}
+     * @param Model $model
+     * @return bool
      */
-    public function destroy($model)
+    public function destroy(Model $model): bool
     {
         return $model->delete();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function allTranslatedIn($lang)
-    {
-        return $this->model->whereHas('translations', function (Builder $q) use ($lang) {
-            $q->where('locale', "$lang");
-        })->with('translations')->orderBy('created_at', 'DESC')->get();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function findBySlug($slug)
-    {
-        if (method_exists($this->model, 'translations')) {
-            return $this->model->whereHas('translations', function (Builder $q) use ($slug) {
-                $q->where('slug', $slug);
-            })->with('translations')->first();
-        }
-
-        return $this->model->where('slug', $slug)->first();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function findByAttributes(array $attributes)
-    {
-        $query = $this->buildQueryByAttributes($attributes);
-
-        return $query->first();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function getByAttributes(array $attributes, $orderBy = null, $sortOrder = 'asc')
-    {
-        $query = $this->buildQueryByAttributes($attributes, $orderBy, $sortOrder);
-
-        return $query->get();
-    }
-
-    /**
-     * Build Query to catch resources by an array of attributes and params
-     *
-     * @param  null|string  $orderBy
-     * @param  string  $sortOrder
-     * @return \Illuminate\Database\Eloquent\Builder
-     */
-    private function buildQueryByAttributes(array $attributes, $orderBy = null, $sortOrder = 'asc')
-    {
-        $query = $this->model->query();
-
-        if (method_exists($this->model, 'translations')) {
-            $query = $query->with('translations');
-        }
-
-        foreach ($attributes as $field => $value) {
-            $query = $query->where($field, $value);
-        }
-
-        if (null !== $orderBy) {
-            $query->orderBy($orderBy, $sortOrder);
-        }
-
-        return $query;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function findByMany(array $ids)
-    {
-        $query = $this->model->query();
-
-        if (method_exists($this->model, 'translations')) {
-            $query = $query->with('translations');
-        }
-
-        return $query->whereIn('id', $ids)->get();
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function clearCache()
-    {
-        return true;
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function where(string $field, $value, string $operator = null)
-    {
-        if ($operator === null) {
-            $operator = '=';
-        } else {
-            [$value, $operator] = [$operator, $value];
-        }
-
-        return $this->model->where($field, $operator, $value);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function with($relationships)
-    {
-        return $this->model->with($relationships);
-    }
-
-    /**
-     * {@inheritdoc}
-     */
-    public function whereIn(string $field, array $values): Builder
-    {
-        return $this->model->whereIn($field, $values);
     }
 }
